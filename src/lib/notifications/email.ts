@@ -22,8 +22,8 @@ export async function emailNovaSessaoAdmin(sessao: any, cliente: any) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'SG Studio <onboarding@resend.dev>',
-      to: process.env.ADMIN_EMAIL || 'admin@sgstudio.pt',
+      from: 'Wavy Studios <onboarding@resend.dev>',
+      to: process.env.ADMIN_EMAIL || 'admin@wavystudios.pt',
       subject: `Nova sessão: ${cliente.nome} — ${sessao.data}`,
       html: `
         <div style="font-family:system-ui;max-width:500px;margin:0 auto;padding:24px;background:#111;color:#e5e2e1;border-radius:12px">
@@ -63,7 +63,7 @@ export async function emailSessaoConfirmada(clienteEmail: string, sessao: any) {
 
   try {
     await resend.emails.send({
-      from: 'SG Studio <onboarding@resend.dev>',
+      from: 'Wavy Studios <onboarding@resend.dev>',
       to: clienteEmail,
       subject: `Sessão confirmada — ${sessao.data}`,
       html: `
@@ -86,7 +86,7 @@ export async function emailSessaoRecusada(clienteEmail: string, sessao: any) {
 
   try {
     await resend.emails.send({
-      from: 'SG Studio <onboarding@resend.dev>',
+      from: 'Wavy Studios <onboarding@resend.dev>',
       to: clienteEmail,
       subject: `Sessão recusada — ${sessao.data}`,
       html: `
@@ -111,7 +111,7 @@ export async function emailContacto(nome: string, email: string, assunto: string
 
   try {
     await resend.emails.send({
-      from: 'SG Studio <onboarding@resend.dev>',
+      from: 'Wavy Studios <onboarding@resend.dev>',
       to: process.env.ADMIN_EMAIL || 'wavystudiosinfo@gmail.com',
       subject: `Contacto: ${assunto} — de ${nome}`,
       html: `

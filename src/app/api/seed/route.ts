@@ -10,10 +10,10 @@ export async function GET() {
 
   // 1. Create Admin user
   const { data: adminUser, error: adminErr } = await supabase.auth.admin.createUser({
-    email: 'admin@sgstudio.pt',
+    email: 'admin@wavystudios.pt',
     password: 'admin123',
     email_confirm: true,
-    user_metadata: { nome: 'Admin SG', telefone: '+351939910528' },
+    user_metadata: { nome: 'Admin Wavy', telefone: '+351939910528' },
   })
 
   if (adminErr && !adminErr.message.includes('already been registered')) {
@@ -22,7 +22,7 @@ export async function GET() {
     // Create/update profile as admin
     await supabase.from('profiles').upsert({
       id: adminUser.user.id,
-      nome: 'Admin SG',
+      nome: 'Admin Wavy',
       telefone: '+351939910528',
       role: 'admin',
       estado: 'ativo',
@@ -31,11 +31,11 @@ export async function GET() {
   } else {
     // User already exists — find and update role
     const { data: users } = await supabase.auth.admin.listUsers()
-    const existing = users?.users?.find(u => u.email === 'admin@sgstudio.pt')
+    const existing = users?.users?.find(u => u.email === 'admin@wavystudios.pt')
     if (existing) {
       await supabase.from('profiles').upsert({
         id: existing.id,
-        nome: 'Admin SG',
+        nome: 'Admin Wavy',
         telefone: '+351939910528',
         role: 'admin',
         estado: 'ativo',
@@ -46,7 +46,7 @@ export async function GET() {
 
   // 2. Create Client user
   const { data: clientUser, error: clientErr } = await supabase.auth.admin.createUser({
-    email: 'cliente@sgstudio.pt',
+    email: 'cliente@wavystudios.pt',
     password: 'cliente123',
     email_confirm: true,
     user_metadata: { nome: 'João Demo', telefone: '+351911111111' },
@@ -67,7 +67,7 @@ export async function GET() {
     results.push({ cliente: 'created', id: clientUser.user.id })
   } else {
     const { data: users } = await supabase.auth.admin.listUsers()
-    const existing = users?.users?.find(u => u.email === 'cliente@sgstudio.pt')
+    const existing = users?.users?.find(u => u.email === 'cliente@wavystudios.pt')
     if (existing) {
       await supabase.from('profiles').upsert({
         id: existing.id,
@@ -94,8 +94,8 @@ export async function GET() {
     profiles: profiles || [],
     profilesError: profErr?.message || null,
     instructions: {
-      admin: 'admin@sgstudio.pt / admin123',
-      cliente: 'cliente@sgstudio.pt / cliente123',
+      admin: 'admin@wavystudios.pt / admin123',
+      cliente: 'cliente@wavystudios.pt / cliente123',
     },
   })
 }

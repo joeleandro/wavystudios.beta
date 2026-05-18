@@ -10,7 +10,7 @@ export async function wppNovaSessaoAdmin(sessao: any, cliente: any) {
     From: 'whatsapp:+14155238886',
     To: `whatsapp:${process.env.ADMIN_PHONE}`,
     Body:
-      `🎙️ *Nova sessão SG Studio*\n\n` +
+      `🎙️ *Nova sessão Wavy Studios*\n\n` +
       `👤 Cliente: ${cliente.nome}\n` +
       `📅 Data: ${sessao.data}\n` +
       `⏰ Hora: ${sessao.hora_inicio} - ${sessao.hora_fim}\n` +

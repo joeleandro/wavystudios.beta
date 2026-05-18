@@ -36,7 +36,7 @@ export default function LoginPage() {
   async function quickLogin(role: "admin" | "cliente") {
     setError("");
     setLoading(true);
-    const testEmail = role === "admin" ? "admin@sgstudio.pt" : "cliente@sgstudio.pt";
+    const testEmail = role === "admin" ? "admin@wavystudios.pt" : "cliente@wavystudios.pt";
     const testPass = role === "admin" ? "admin123" : "cliente123";
 
     const { error: authError } = await supabase.auth.signInWithPassword({
