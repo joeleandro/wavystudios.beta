@@ -863,3 +863,111 @@ img { display: block; max-width: 100%; }
 .pricing-section, .artists-section, .team-section {
   animation: reveal-up 0.8s ease both;
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE MENU
+═══════════════════════════════════════════════════════════════ */
+.nav-mobile-btn {
+  display: none;
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  align-items: center; justify-content: center;
+  color: var(--text); cursor: pointer;
+  transition: border-color .2s;
+}
+.nav-mobile-btn:hover { border-color: var(--border2); }
+.nav-desktop-only { display: flex; }
+
+.mobile-menu-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.8);
+  backdrop-filter: blur(12px);
+  animation: fade-in .2s ease;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.mobile-menu {
+  position: absolute; top: 0; right: 0;
+  width: 280px; height: 100vh;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  padding: 80px 32px 32px;
+  animation: slide-in .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
+
+.mobile-menu-links {
+  display: flex; flex-direction: column; gap: 0;
+}
+.mobile-menu-links a {
+  display: block;
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  transition: color .2s;
+}
+.mobile-menu-links a:hover { color: var(--text); }
+
+@media (max-width: 1024px) {
+  .nav-mobile-btn { display: flex; }
+  .nav-desktop-only { display: none; }
+  .nav-links { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE SECTION FIXES
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Pricing cards stack */
+  #pricing .payment-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Artists carousel smaller */
+  .artists-section { padding: 60px 0 !important; }
+  .artist-circle { width: 80px !important; height: 80px !important; margin-left: -15px !important; }
+  .artist-circle:first-child { margin-left: 0 !important; }
+  .artists-title { font-size: 48px !important; }
+
+  /* Team section stacks */
+  .team-section { flex-direction: column !important; min-height: auto !important; }
+  .team-member { min-height: 200px !important; }
+
+  /* Footer single column */
+  .site-footer { grid-template-columns: 1fr !important; padding: 40px 16px !important; }
+
+  /* Pricing grid single column */
+  #pricing > div > div[style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Login single column */
+  [style*="grid-template-columns: 1fr 1fr"][style*="min-height: 100vh"] {
+    grid-template-columns: 1fr !important;
+  }
+  .login-left { display: none !important; }
+  .login-right { padding: 32px 20px !important; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 0 16px 40px !important; }
+  .hero-h1 { font-size: 40px !important; }
+  .hero-sub { font-size: 13px !important; }
+  .hero-label { font-size: 8px !important; }
+  .cta-btn { width: 100% !important; justify-content: center !important; }
+
+  .artists-title { font-size: 36px !important; }
+  .artist-circle { width: 60px !important; height: 60px !important; margin-left: -10px !important; }
+
+  #pricing h2 { font-size: 32px !important; }
+  #pricing [style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nav-mobile-btn { width: 38px; height: 38px; }
+  .main-nav img { width: 40px !important; height: 40px !important; }
+}
