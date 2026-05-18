@@ -1,107 +1,178 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
+const plans = [
+  {
+    name: "Standard",
+    price: "€150",
+    description: "Para começar com consistência",
+    features: [
+      "Captação Vocal",
+      "4 horas semanais (16h mensais)",
+      "Sessões de 1h cada",
+      "2 Mix/Masters incluídos",
+    ],
+    cta: "Saber mais",
+    highlighted: false,
+  },
+  {
+    name: "Professional",
+    price: "€190",
+    description: "Para quem já está ativo",
+    features: [
+      "Captação Vocal",
+      "6 horas semanais (24h mensais)",
+      "Sessões de 1h30 cada",
+      "2 Mix/Masters incluídos",
+      "Prioridade na marcação",
+      "Suporte dedicado",
+    ],
+    cta: "Começar agora",
+    highlighted: true,
+  },
+  {
+    name: "Avançado",
+    price: "€250",
+    description: "Para elevar o nível máximo",
+    features: [
+      "Tudo do Professional",
+      "8 horas semanais (32h mensais)",
+      "Sessões de 2h cada",
+      "1 Sessão fotográfica (15 fotos)",
+      "1 Instrumental Exclusivo",
+      "Direção Criativa personalizada",
+    ],
+    cta: "Falar connosco",
+    highlighted: false,
+  },
+];
+
 export function PricingSection() {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   return (
-    <section className="pricing-section" id="pricing">
-      {/* Centered header like reference */}
-      <div style={{ textAlign: "center", marginBottom: 80 }}>
-        <h2 className="bebas" style={{ fontSize: "clamp(48px, 7vw, 80px)", textTransform: "uppercase", lineHeight: .95, letterSpacing: ".02em", marginBottom: 20 }}>Escolhe o teu ritmo</h2>
-        <p style={{ maxWidth: 600, margin: "0 auto", fontSize: 15, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8 }}>
-          Sem contratos longos, sem surpresas. Escolhe o plano que encaixa na tua vida, marca as sessões quando quiseres, e foca-te no que importa — a tua música.
-        </p>
-        <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
-          <div className="glass" style={{ padding: "6px 24px", borderRadius: 40, fontSize: 10, fontWeight: 600, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--text3)" }}>Mensal</div>
-        </div>
-      </div>
+    <section id="pricing" style={{ background: "var(--bg)", padding: "120px 0" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 48px" }}>
+          <h2 className="bebas" style={{ fontSize: "clamp(40px, 6vw, 64px)", color: "var(--text)", marginBottom: 16, letterSpacing: ".02em" }}>
+            Planos e Preços
+          </h2>
+          <p style={{ fontSize: 15, color: "var(--text3)", lineHeight: 1.7, marginBottom: 24 }}>
+            Sem contratos longos, sem surpresas. Escolhe o plano que faz sentido para ti e começa a gravar.
+          </p>
 
-      <div className="pricing-grid">
-        {/* Standard */}
-        <div className="glass pricing-card">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "rgba(255,255,255,.3)" }}>radio_button_checked</span>
-            <span className="pricing-name bebas" style={{ marginBottom: 0, fontSize: 28 }}>Standard</span>
-          </div>
-          <div className="pricing-desc">Para começar com consistência</div>
-          <div className="pricing-price bebas" style={{ marginBottom: 4 }}><span className="currency">€</span>150<span className="period">/ por mês</span></div>
-          <Link href="/login" className="pricing-btn" style={{ display: "block", textAlign: "center" }}>Saber mais</Link>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text)", marginBottom: 16 }}>O que está incluído:</div>
-          <ul className="pricing-features">
-            <li><span className="material-symbols-outlined">check_circle</span>Captação Vocal</li>
-            <li><span className="material-symbols-outlined">check_circle</span>4 horas semanais <small style={{ color: "var(--text3)" }}>(16 horas mensais)</small></li>
-            <li><span className="material-symbols-outlined">check_circle</span>Sessões de 1h cada</li>
-            <li><span className="material-symbols-outlined">check_circle</span>2 Mix/Masters incluídos</li>
-          </ul>
-        </div>
-
-        {/* Professional - Featured/Scaled */}
-        <div className="glass pricing-card featured" style={{ transform: "scale(1.03)", zIndex: 5, background: "rgba(255,255,255,.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--primary)" }}>radio_button_checked</span>
-            <span className="pricing-name bebas" style={{ marginBottom: 0, fontSize: 28 }}>Professional</span>
-          </div>
-          <div className="pricing-desc">Para quem já está ativo.</div>
-          <div className="pricing-price bebas" style={{ marginBottom: 4 }}><span className="currency">€</span>190<span className="period">/ por mês</span></div>
-          <Link href="/login" className="pricing-btn" style={{ display: "block", textAlign: "center", background: "#fff", color: "#000", borderColor: "#fff" }}>Saber mais</Link>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text)", marginBottom: 16 }}>O que está incluído:</div>
-          <ul className="pricing-features">
-            <li><span className="material-symbols-outlined">check_circle</span>Captação Vocal</li>
-            <li><span className="material-symbols-outlined">check_circle</span>6 horas semanais <small style={{ color: "var(--text3)" }}>(24 horas mensais)</small></li>
-            <li><span className="material-symbols-outlined">check_circle</span>Sessões de 1h30 cada</li>
-            <li><span className="material-symbols-outlined">check_circle</span>2 Mix/Masters incluídos</li>
-          </ul>
-        </div>
-
-        {/* Avançado */}
-        <div className="glass pricing-card">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "rgba(255,255,255,.3)" }}>radio_button_checked</span>
-            <span className="pricing-name bebas" style={{ marginBottom: 0, fontSize: 28 }}>Avançado</span>
-          </div>
-          <div className="pricing-desc">Para elevar o nível máximo.</div>
-          <div className="pricing-price bebas" style={{ marginBottom: 4 }}><span className="currency">€</span>250<span className="period">/ por mês</span></div>
-          <Link href="/login" className="pricing-btn" style={{ display: "block", textAlign: "center" }}>Saber mais</Link>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text)", marginBottom: 16 }}>O que está incluído:</div>
-          <ul className="pricing-features">
-            <li><span className="material-symbols-outlined">check_circle</span>Captação Vocal</li>
-            <li><span className="material-symbols-outlined">check_circle</span>8 horas semanais <small style={{ color: "var(--text3)" }}>(32 horas mensais)</small></li>
-            <li><span className="material-symbols-outlined">check_circle</span>Sessões de 2h cada</li>
-            <li><span className="material-symbols-outlined">check_circle</span>1 Sessão fotográfica (15 fotos)</li>
-            <li><span className="material-symbols-outlined">check_circle</span>1 Instrumental Exclusivo</li>
-            <li><span className="material-symbols-outlined">check_circle</span>Direção Criativa personalizada</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Payment methods */}
-      <div style={{ textAlign: "center", marginTop: 80 }}>
-        <h3 className="bebas" style={{ fontSize: 40, letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 32 }}>Métodos de pagamento</h3>
-      </div>
-      <div className="payment-grid">
-        <div className="glass pay-card"><span style={{ fontSize: 22, fontWeight: 700, color: "#003087" }}>PayPal</span></div>
-        <div className="glass pay-card">
-          <div style={{ display: "flex" }}>
-            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#EB001B", opacity: .85 }} />
-            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#F79E1B", opacity: .85, marginLeft: -14 }} />
+          {/* Toggle */}
+          <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,.03)", borderRadius: 100, padding: 4 }}>
+            <button
+              onClick={() => setIsAnnual(false)}
+              style={{
+                padding: "10px 24px", borderRadius: 100, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer", transition: "all .2s",
+                background: !isAnnual ? "rgba(255,255,255,.07)" : "transparent",
+                color: !isAnnual ? "var(--text)" : "var(--text3)",
+              }}
+            >
+              Mensal
+            </button>
+            <button
+              onClick={() => setIsAnnual(true)}
+              style={{
+                padding: "10px 24px", borderRadius: 100, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer", transition: "all .2s",
+                background: isAnnual ? "rgba(255,255,255,.07)" : "transparent",
+                color: isAnnual ? "var(--text)" : "var(--text3)",
+              }}
+            >
+              Anual
+            </button>
           </div>
         </div>
-        <div className="glass pay-card"><span style={{ fontSize: 20, fontWeight: 700 }}>Revolut</span></div>
-        <div className="glass pay-card">
-          <span style={{ fontSize: 16, fontWeight: 700, border: "2px solid #c00", padding: "2px 6px" }}>MB <span style={{ fontSize: 11, fontWeight: 400 }}>WAY</span></span>
-        </div>
-      </div>
 
-      {/* Policy */}
-      <div className="pricing-policy">
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".3em", textTransform: "uppercase" as const, color: "var(--primary-c)", marginBottom: 16 }}>Política de Serviços e Condições</p>
-          <p style={{ fontSize: 14, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8, marginBottom: 14 }}>Não são efetuados reembolsos em nenhuma circunstância.</p>
-          <p style={{ fontSize: 14, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8, marginBottom: 14 }}>Todas as entregas serão realizadas conforme o pedido do cliente. No entanto, este pedido deve ser efetuado no prazo máximo de <strong style={{ color: "var(--text)", fontWeight: 600 }}>30 dias após a última sessão realizada.</strong></p>
-          <p style={{ fontSize: 14, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8 }}>Sessões canceladas pelo cliente <strong style={{ color: "var(--text)", fontWeight: 600 }}>não poderão ser remarcadas.</strong></p>
+        {/* Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, maxWidth: 1100, margin: "0 auto" }}>
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              style={{
+                position: "relative",
+                borderRadius: 16,
+                border: plan.highlighted ? "1px solid rgba(255,255,255,.1)" : "1px solid rgba(255,255,255,.06)",
+                background: plan.highlighted ? "rgba(255,255,255,.02)" : "transparent",
+                padding: 28,
+                transition: "all .3s",
+                transform: plan.highlighted ? "scale(1.02)" : "none",
+                boxShadow: plan.highlighted ? "0 20px 60px rgba(0,0,0,.3)" : "none",
+              }}
+            >
+              {/* Most Popular badge */}
+              {plan.highlighted && (
+                <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)" }}>
+                  <div style={{ position: "relative" }}>
+                    <div style={{ padding: "6px 16px", background: "rgba(255,255,255,.03)", backdropFilter: "blur(8px)", borderRadius: 100, border: "1px solid rgba(255,255,255,.1)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--primary)", animation: "pulse 2s infinite" }} />
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.8)" }}>Mais Popular</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Plan info */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{ fontSize: 20, fontWeight: 500, color: "var(--text)", marginBottom: 8 }}>{plan.name}</h3>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span className="bebas" style={{ fontSize: 40, color: "var(--text)" }}>{plan.price}</span>
+                  <span style={{ fontSize: 13, color: "var(--text3)" }}>por mês</span>
+                </div>
+                <p style={{ fontSize: 13, color: "var(--text3)", marginTop: 12 }}>{plan.description}</p>
+              </div>
+
+              {/* Features */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+                {plan.features.map((feature, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 16, color: "rgba(255,255,255,.25)" }}>check</span>
+                    <span style={{ fontSize: 13, color: "var(--text2)" }}>{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <Link href="/login" style={{ textDecoration: "none" }}>
+                <button
+                  style={{
+                    width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .2s",
+                    background: plan.highlighted ? "#fff" : "transparent",
+                    color: plan.highlighted ? "#000" : "var(--text)",
+                    border: plan.highlighted ? "none" : "1px solid rgba(255,255,255,.08)",
+                  }}
+                >
+                  {plan.cta}
+                </button>
+              </Link>
+            </div>
+          ))}
         </div>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8, marginBottom: 14 }}>As horas de utilização semanal <strong style={{ color: "var(--text)", fontWeight: 600 }}>não são acumuláveis.</strong></p>
-          <p style={{ fontSize: 14, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8 }}>A marcação será realizada de acordo com a <strong style={{ color: "var(--text)", fontWeight: 600 }}>disponibilidade conjunta</strong> do fotógrafo e do cliente.</p>
+
+        {/* Payment methods */}
+        <div style={{ textAlign: "center", marginTop: 80 }}>
+          <h3 className="bebas" style={{ fontSize: 32, letterSpacing: ".04em", color: "var(--text)", marginBottom: 24 }}>Métodos de pagamento</h3>
         </div>
+        <div className="payment-grid" style={{ maxWidth: 600, margin: "0 auto" }}>
+          <div className="glass pay-card"><span style={{ fontSize: 20, fontWeight: 700, color: "#003087" }}>PayPal</span></div>
+          <div className="glass pay-card">
+            <div style={{ display: "flex" }}>
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#EB001B", opacity: .85 }} />
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#F79E1B", opacity: .85, marginLeft: -12 }} />
+            </div>
+          </div>
+          <div className="glass pay-card"><span style={{ fontSize: 18, fontWeight: 700 }}>Revolut</span></div>
+          <div className="glass pay-card">
+            <span style={{ fontSize: 14, fontWeight: 700, border: "2px solid #c00", padding: "2px 6px" }}>MB <span style={{ fontSize: 10, fontWeight: 400 }}>WAY</span></span>
+          </div>
+        </div>
+
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}` }} />
       </div>
     </section>
   );

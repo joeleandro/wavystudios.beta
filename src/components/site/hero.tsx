@@ -22,19 +22,19 @@ export function Hero() {
         </svg>
       </div>
 
-      {/* Logo centered in hero — "Star of the Show" */}
-      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -60%)", zIndex: 1, opacity: 0.12, pointerEvents: "none" }}>
+      {/* Logo centered in hero — "Star of the Show" — LARGE like reference */}
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -55%)", zIndex: 1, opacity: 0.15, pointerEvents: "none" }}>
         <img
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuD69aH4gDqvS6GPs2xSrAsH6uz0MUTCYqNe9923wUo4mY5swSnJVLBhwJFUuStaN2T_cN38aJLdPTrZk1_T0WjJhTQukQ3HpPrVj3G-OORLvLj4s-BJ0MnDFczT0XWDrJ9XV_HfRyB5mtCX493f9HOdOzasnAOtMQn6ZA54RKD9-WT6YTVWvKbv7sIS0Ws6QNdPuMBt6vS0zoh7ONM9u7bCFWpA-r3d4Q24kUhMWTLVcLfgzhm5iypCN_23yY9L4NP9DtnB0OJfJLa6"
           alt=""
-          style={{ width: 400, height: 400, objectFit: "contain", filter: "brightness(3) contrast(1.2)" }}
+          style={{ width: "clamp(400px, 50vw, 700px)", height: "clamp(400px, 50vw, 700px)", objectFit: "contain", filter: "brightness(3) contrast(1.2)" }}
         />
       </div>
 
       {/* Content — bottom-left, smaller and humanized */}
       <div style={{ position: "relative", zIndex: 2, maxWidth: 700, width: "100%" }}>
         <div className="hero-label">DESDE 2024 — CAPTAÇÃO & PRODUÇÃO MUSICAL</div>
-        <h1 className="hero-h1 bebas" style={{ fontSize: "clamp(52px, 8vw, 110px)" }}>
+        <h1 className="hero-h1 bebas" style={{ fontSize: "clamp(64px, 10vw, 140px)" }}>
           O TEU SOM<br />
           MERECE<br />
           <span className="dim">MAIS.</span>
