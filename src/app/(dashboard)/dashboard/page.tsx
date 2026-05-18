@@ -27,12 +27,11 @@ export default function ClienteDashboard() {
       .eq("id", user.id)
       .single();
 
-    // FIX: auto-create profile via server API if missing
+    // FIX: auto-create profile via server API if missing (service role bypasses RLS)
     if (error && error.code === "PGRST116") {
       try {
         const res = await fetch("/api/profile", { method: "POST" });
         if (res.ok) {
-          // Re-fetch with planos join
           const { data: refetch } = await supabase
             .from("profiles")
             .select("*, planos(*)")

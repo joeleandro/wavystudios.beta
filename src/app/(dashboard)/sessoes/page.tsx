@@ -96,6 +96,7 @@ export default function MarcarSessaoPage() {
     { name: "Bere", role: "Vocal Producer" },
     { name: "Wavy", role: "Beat Maker" },
     { name: "Alexandre Campos", role: "Mix Engineer" },
+    { name: "Yang", role: "Producer" },
   ];
 
   // Progress indicator
@@ -133,7 +134,7 @@ export default function MarcarSessaoPage() {
       <div style={{ marginBottom: 28 }}>
         <div className="db-page-title bebas">Marcar Sessão</div>
         <div className="db-page-sub">
-          {duracao}min por sessão • Horário: 12h – 16h
+          {duracao}min por sessão • Horário: 12h – 16h (meio-dia à tarde)
         </div>
       </div>
 
@@ -155,10 +156,10 @@ export default function MarcarSessaoPage() {
 
       {/* Error display */}
       {error && (
-        <div className="anim-fade-in" style={{ background: "rgba(239,68,68,.06)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "center", gap: 10 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#f87171" }}>error</span>
-          <span style={{ fontSize: 13, color: "#f87171" }}>{error}</span>
-          <button onClick={() => setError("")} style={{ marginLeft: "auto", color: "#f87171", opacity: 0.6 }}>
+        <div className="anim-fade-in" style={{ background: "rgba(239,68,68,.06)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#f87171", flexShrink: 0, marginTop: 1 }}>error</span>
+          <span style={{ fontSize: 13, color: "#f87171", flex: 1 }}>{error}</span>
+          <button onClick={() => setError("")} style={{ color: "#f87171", opacity: 0.6, flexShrink: 0 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span>
           </button>
         </div>
@@ -297,7 +298,7 @@ export default function MarcarSessaoPage() {
         </div>
 
         {step >= 4 ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginTop: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 16 }}>
             {produtores.map((p) => (
               <button
                 key={p.name}

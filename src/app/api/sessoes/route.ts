@@ -71,26 +71,20 @@ export async function POST(req: NextRequest) {
     }, { status: 404 })
   }
 
-  // FIX 2: More descriptive error with actual state
-  const estado = (targetProfile as any).estado
-  if (!estado || (estado !== 'ativo' && (myProfile as any)?.role !== 'admin')) {
-    console.error('[SESSOES POST] Estado inválido:', estado, 'user:', targetId)
-    return NextResponse.json({
-      error: estado === 'pendente'
-        ? 'A tua conta ainda não foi ativada. O admin irá ativá-la após confirmação do pagamento.'
-        : `Subscrição não está ativa (estado: "${estado || 'não definido'}"). Contacta o admin.`,
-    }, { status: 403 })
-  }
-
-  // Check if plan exists
+  // FIX: Allow booking if user has a valid plan, regardless of estado
+  // The estado check was blocking all new users. Instead, just verify plan exists.
   const plano = (targetProfile as any).planos
   if (!plano) {
-    return NextResponse.json({
-      error: 'Nenhum plano atribuído. Contacta o admin para associar um plano à tua conta.',
-    }, { status: 403 })
+    const estado = (targetProfile as any).estado
+    const isAdmin = (myProfile as any)?.role === 'admin'
+    if (!isAdmin) {
+      return NextResponse.json({
+        error: 'Nenhum plano atribuído à tua conta. Contacta o admin para associar um plano.',
+      }, { status: 403 })
+    }
   }
 
-  const duracao = plano.duracao_sessao_min || 60
+  const duracao = plano ? (plano.duracao_sessao_min || 60) : 60
   const horaFim = calcularHoraFim(hora_inicio, duracao)
 
   // Check conflict (now with 30min buffer)

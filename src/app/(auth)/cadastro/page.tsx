@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,7 +13,6 @@ export default function CadastroPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -23,10 +21,11 @@ export default function CadastroPage() {
 
     if (password.length < 8) { setError("Password deve ter no mínimo 8 caracteres"); return; }
     if (password !== confirmPassword) { setError("Passwords não coincidem"); return; }
-    if (!telefone) { setError("Telefone é obrigatório (para WhatsApp)"); return; }
+    if (!telefone) { setError("Telefone é obrigatório"); return; }
 
     setLoading(true);
 
+    // 1. Create auth user
     const { data: signUpData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -42,20 +41,24 @@ export default function CadastroPage() {
       return;
     }
 
-    // FIX: Create profile immediately after signup so it exists in DB
-    // This handles the case where email confirmation is disabled (instant login)
-    if (signUpData?.user) {
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: signUpData.user.id,
-        nome,
-        telefone,
-        role: "cliente",
-        estado: "pendente",
-      }, { onConflict: "id" });
-
-      if (profileError) {
-        console.warn("[Cadastro] Could not create profile (may be RLS):", profileError.message);
-        // This is non-blocking — the dashboard layout will auto-create it later
+    // 2. If user was created AND is immediately confirmed (email confirm disabled),
+    //    sign them in and call the server-side profile API (bypasses RLS)
+    if (signUpData?.user && signUpData.session) {
+      // User is already signed in (email confirmation disabled)
+      try {
+        await fetch("/api/profile", { method: "POST" });
+      } catch {
+        // Non-fatal — dashboard will retry
+      }
+    } else if (signUpData?.user && !signUpData.session) {
+      // Email confirmation required — sign in manually to get a session
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (!signInError) {
+        try {
+          await fetch("/api/profile", { method: "POST" });
+        } catch {
+          // Non-fatal
+        }
       }
     }
 
@@ -71,14 +74,14 @@ export default function CadastroPage() {
             <span className="material-symbols-outlined" style={{ fontSize: 32, color: "#4ade80" }}>check_circle</span>
           </div>
           <h2 className="bebas" style={{ fontSize: 36, marginBottom: 12, color: "var(--text)" }}>Conta criada!</h2>
-          <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 24 }}>
-            A tua conta foi registada com sucesso. O admin irá ativar a tua subscrição após confirmação do pagamento.
+          <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 16 }}>
+            A tua conta foi registada com sucesso.
           </p>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 24 }}>
-            Receberás uma notificação quando o plano estiver ativo.
+          <p style={{ fontSize: 13, color: "var(--text3)", marginBottom: 24, lineHeight: 1.7 }}>
+            O admin irá atribuir um plano e ativar a tua subscrição. Já podes entrar no dashboard.
           </p>
-          <Link href="/login" className="login-btn" style={{ display: "inline-flex", width: "auto", padding: "12px 32px" }}>
-            Ir para Login
+          <Link href="/dashboard" className="login-btn" style={{ display: "inline-flex", width: "auto", padding: "12px 32px" }}>
+            Entrar no Dashboard
           </Link>
         </div>
       </div>
@@ -87,7 +90,6 @@ export default function CadastroPage() {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: "100vh" }}>
-      {/* LEFT BRAND PANEL */}
       <div className="login-left">
         <div className="login-left-bg" />
         <svg className="login-left-geo" viewBox="0 0 800 800">
@@ -97,11 +99,10 @@ export default function CadastroPage() {
         <div className="login-brand">
           <div className="login-brand-name bebas">Wavy<br />Studios</div>
           <div className="login-brand-sub">Cria a tua conta</div>
-          <div className="login-brand-quote">Após o registo, o admin ativa a tua subscrição e terás acesso ao dashboard para marcares as tuas sessões.</div>
+          <div className="login-brand-quote">Após o registo, o admin atribui o plano e tens acesso imediato ao dashboard.</div>
         </div>
       </div>
 
-      {/* RIGHT FORM */}
       <div className="login-right">
         <div className="login-box">
           <div className="login-title bebas">Criar conta</div>
@@ -129,7 +130,7 @@ export default function CadastroPage() {
             </div>
 
             {error && (
-              <div style={{ fontSize: 12, color: "#f87171", textAlign: "center", padding: "8px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 6, marginTop: 8 }}>{error}</div>
+              <div style={{ fontSize: 12, color: "#f87171", padding: "8px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 6, marginTop: 8 }}>{error}</div>
             )}
 
             <button className="login-btn" type="submit" disabled={loading} style={{ marginTop: 20 }}>

@@ -40,31 +40,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       // Profile doesn't exist yet — try to create via server API
       if (error && error.code === "PGRST116") {
+        // Profile doesn't exist — create via server API (uses service role, bypasses RLS)
         try {
           const res = await fetch("/api/profile", { method: "POST" });
           if (res.ok) {
-            const { profile: created } = await res.json();
-            // Re-fetch with planos join
+            // Re-fetch with planos join after creation
             const { data: refetch } = await supabase
               .from("profiles")
               .select("*, planos(*)")
               .eq("id", user.id)
               .single();
-            setProfile(refetch || created);
+            setProfile(refetch || { nome: user.user_metadata?.nome || user.email?.split("@")[0] || "Artista", estado: "pendente" });
           } else {
-            const fallbackName =
-              user.user_metadata?.nome ||
-              user.user_metadata?.full_name ||
-              user.email?.split("@")[0] ||
-              "Artista";
+            const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
             setProfileWarning(true);
             setProfile({ nome: fallbackName, estado: "pendente" });
           }
         } catch {
-          const fallbackName =
-            user.user_metadata?.nome ||
-            user.email?.split("@")[0] ||
-            "Artista";
+          const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
           setProfileWarning(true);
           setProfile({ nome: fallbackName, estado: "pendente" });
         }

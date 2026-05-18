@@ -47,10 +47,10 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      // Account doesn't exist — try to create it via seed
-      setSeedMsg("A criar contas de teste...");
+      // Account doesn't exist — try to create it via setup
+      setSeedMsg("A criar contas de teste... (pode demorar ~5s)");
       try {
-        const res = await fetch("/api/seed");
+        const res = await fetch("/api/setup");
         const data = await res.json();
         setSeedMsg("");
 
