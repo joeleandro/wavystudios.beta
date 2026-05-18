@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ maxWidth: 1400 }}>
+    <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
         <div className="db-page-title bebas">Admin Dashboard</div>
         <div className="db-page-sub">Gestão do estúdio</div>

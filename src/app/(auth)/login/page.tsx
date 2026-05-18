@@ -26,12 +26,31 @@ export default function LoginPage() {
       return;
     }
 
-    // Check role for redirect
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       router.push(profile?.role === "admin" ? "/admin" : "/dashboard");
     }
+  }
+
+  async function quickLogin(role: "admin" | "cliente") {
+    setError("");
+    setLoading(true);
+    const testEmail = role === "admin" ? "admin@sgstudio.pt" : "cliente@sgstudio.pt";
+    const testPass = role === "admin" ? "admin123" : "cliente123";
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: testEmail,
+      password: testPass,
+    });
+
+    if (authError) {
+      setError(`Conta de teste "${role}" não existe. Cria primeiro no Supabase.`);
+      setLoading(false);
+      return;
+    }
+
+    router.push(role === "admin" ? "/admin" : "/dashboard");
   }
 
   return (
@@ -74,7 +93,32 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div style={{ marginTop: 24, textAlign: "center", fontSize: 13, color: "var(--text3)" }}>
+          {/* Test accounts */}
+          <div style={{ marginTop: 28, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+            <p style={{ fontSize: 10, textAlign: "center", color: "var(--text3)", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12 }}>Contas de teste</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => quickLogin("admin")}
+                disabled={loading}
+                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid rgba(139,0,0,.3)", color: "var(--primary)", background: "rgba(139,0,0,.08)", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14, display: "block", marginBottom: 4 }}>admin_panel_settings</span>
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => quickLogin("cliente")}
+                disabled={loading}
+                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text3)", background: "transparent", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14, display: "block", marginBottom: 4 }}>person</span>
+                Cliente
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: "var(--text3)" }}>
             Não tens conta? <Link href="/cadastro" style={{ color: "var(--primary)", fontWeight: 600 }}>Criar conta</Link>
           </div>
         </div>

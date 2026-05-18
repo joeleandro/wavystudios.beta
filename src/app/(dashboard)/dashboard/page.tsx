@@ -57,7 +57,7 @@ export default function ClienteDashboard() {
   const proximaSessao = sessoes.find(s => s.estado === "confirmada" || s.estado === "pendente");
 
   return (
-    <div style={{ maxWidth: 1200 }}>
+    <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
         <div className="db-page-title bebas">Olá, {(profile?.nome || "").split(" ")[0] || "Cliente"}</div>
         <div className="db-page-sub">PLANO {profile?.planos?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}</div>
