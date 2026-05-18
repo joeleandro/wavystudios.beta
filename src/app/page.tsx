@@ -1,19 +1,23 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { Navigation } from "@/components/site/navigation";
+import { Hero } from "@/components/site/hero";
+import { ArtistsSection } from "@/components/site/artists";
+import { PricingSection } from "@/components/site/pricing";
+import { TeamSection } from "@/components/site/team";
+import { SiteFooter } from "@/components/site/footer";
+import { GlobalEffects } from "@/components/site/global-effects";
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  const role = (session.user as { role: string })?.role;
-  
-  if (role === "admin") {
-    redirect("/admin");
-  } else {
-    redirect("/cliente");
-  }
+export default function HomePage() {
+  return (
+    <>
+      <GlobalEffects />
+      <Navigation />
+      <main>
+        <Hero />
+        <ArtistsSection />
+        <PricingSection />
+        <TeamSection />
+      </main>
+      <SiteFooter />
+    </>
+  );
 }

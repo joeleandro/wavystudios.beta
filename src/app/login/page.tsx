@@ -3,12 +3,14 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { GlobalEffects } from "@/components/site/global-effects";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<"client" | "admin">("client");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -16,11 +18,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const result = await signIn("credentials", { email, password, redirect: false });
 
     if (result?.error) {
       setError("Credenciais inválidas");
@@ -28,10 +26,9 @@ export default function LoginPage() {
       return;
     }
 
-    // Fetch session to check role
     const res = await fetch("/api/auth/session");
     const session = await res.json();
-    
+
     if (session?.user?.role === "admin") {
       router.push("/admin");
     } else {
@@ -40,126 +37,98 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center relative overflow-hidden px-4">
-      {/* Background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-10">
-          <svg className="w-full h-full animate-spin" style={{ animationDuration: "60s" }} viewBox="0 0 1000 1000">
-            <path d="M500,50 L950,500 L500,950 L50,500 Z" fill="none" stroke="#8b0000" strokeWidth="0.5" />
-            <circle cx="500" cy="500" r="350" fill="none" stroke="#8b0000" strokeDasharray="10 20" strokeWidth="0.3" />
-            <path d="M500,150 L850,500 L500,850 L150,500 Z" fill="none" stroke="#8b0000" strokeWidth="0.2" />
+    <>
+      <GlobalEffects />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: "100vh" }}>
+        {/* LEFT BRAND PANEL */}
+        <div className="login-left">
+          <div className="login-left-bg" />
+          <svg className="login-left-geo" viewBox="0 0 800 800">
+            <path d="M400,0 L800,400 L400,800 L0,400 Z" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="1" />
+            <circle cx="400" cy="400" r="300" fill="none" stroke="rgba(255,255,255,.08)" strokeDasharray="10 20" strokeWidth="0.8" />
           </svg>
-        </div>
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-container/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-container/3 rounded-full blur-[100px]" />
-      </div>
-
-      {/* Film grain overlay */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-50 opacity-[0.04] mix-blend-overlay"
-        style={{ 
-          backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" 
-        }} 
-      />
-
-      {/* Login card */}
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-12">
-          <div className="w-16 h-16 glass-card rounded-2xl flex items-center justify-center mb-6 burgundy-glow">
-            <span className="font-[var(--font-display)] text-3xl text-primary tracking-wider">W</span>
+          <div className="login-brand">
+            <div className="login-brand-name bebas">SG<br />Studio</div>
+            <div className="login-brand-sub">Sound &amp; Vision · Lisboa</div>
+            <div className="login-brand-quote">&ldquo;O estúdio onde o som encontra a sua forma definitiva.&rdquo;</div>
           </div>
-          <h1 className="font-[var(--font-display)] text-4xl text-headline tracking-wider uppercase">
-            Wavy Studios
-          </h1>
-          <p className="text-label-opacity text-xs uppercase tracking-[0.4em] mt-2">
-            Plataforma de Gestão
-          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-label-opacity">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-surface-container border border-white/5 rounded-lg px-4 py-3 text-sm text-on-surface placeholder:text-white/20 focus:outline-none focus:border-primary-container/50 focus:ring-1 focus:ring-primary-container/20 transition-all"
-              placeholder="mail@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-label-opacity">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-surface-container border border-white/5 rounded-lg px-4 py-3 text-sm text-on-surface placeholder:text-white/20 focus:outline-none focus:border-primary-container/50 focus:ring-1 focus:ring-primary-container/20 transition-all"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="text-error text-xs text-center py-2 px-3 bg-error-container/10 rounded-lg border border-error-container/20">
-              {error}
+        {/* RIGHT FORM */}
+        <div className="login-right">
+          <div className="login-box">
+            <div className="login-tabs">
+              <div className={`login-tab ${tab === "client" ? "active-tab" : ""}`} onClick={() => setTab("client")}>Cliente</div>
+              <div className={`login-tab ${tab === "admin" ? "active-tab" : ""}`} onClick={() => setTab("admin")}>Admin</div>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary-container hover:bg-primary-container/80 text-white py-3.5 rounded-lg text-xs font-semibold uppercase tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed burgundy-glow"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                A entrar...
-              </span>
-            ) : (
-              "Entrar"
-            )}
-          </button>
+            <div className="login-title bebas">{tab === "admin" ? "Painel Admin" : "Bem-vindo de volta"}</div>
 
-          {/* Demo credentials */}
-          <div className="pt-4 border-t border-white/5 space-y-3">
-            <p className="text-[10px] text-center text-label-opacity uppercase tracking-[0.15em]">
-              Contas de demonstração
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => { setEmail("admin@wavystudios.com"); setPassword("admin123"); }}
-                className="text-[10px] py-2 px-3 rounded-lg border border-white/5 text-label-opacity hover:text-white hover:border-primary-container/30 transition-all uppercase tracking-wider"
-              >
-                Admin
+            <form onSubmit={handleSubmit}>
+              <div className="login-group">
+                <label className="login-label">Email</label>
+                <input
+                  className="login-input"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="login-group">
+                <label className="login-label">Password</label>
+                <input
+                  className="login-input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {error && (
+                <div style={{ fontSize: 12, color: "#f87171", textAlign: "center", padding: "8px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 6, marginTop: 8 }}>
+                  {error}
+                </div>
+              )}
+
+              <button className="login-btn" type="submit" disabled={loading} style={{ marginTop: 28 }}>
+                {loading ? (
+                  <span>A entrar...</span>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>login</span>
+                    Entrar
+                  </>
+                )}
               </button>
-              <button
-                type="button"
-                onClick={() => { setEmail("joao@email.com"); setPassword("cliente123"); }}
-                className="text-[10px] py-2 px-3 rounded-lg border border-white/5 text-label-opacity hover:text-white hover:border-primary-container/30 transition-all uppercase tracking-wider"
-              >
-                Cliente
-              </button>
+            </form>
+
+            {/* Demo credentials */}
+            <div style={{ marginTop: 28, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+              <p style={{ fontSize: 10, textAlign: "center", color: "var(--text3)", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12 }}>Contas de demonstração</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => { setEmail("admin@wavystudios.com"); setPassword("admin123"); setTab("admin"); }}
+                  style={{ fontSize: 10, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text3)", background: "transparent", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em" }}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEmail("joao@email.com"); setPassword("cliente123"); setTab("client"); }}
+                  style={{ fontSize: 10, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text3)", background: "transparent", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em" }}
+                >
+                  Cliente
+                </button>
+              </div>
             </div>
           </div>
-        </form>
-
-        {/* Footer */}
-        <p className="text-center text-[9px] text-white/20 uppercase tracking-[0.3em] mt-8">
-          © 2024 Wavy Studios — Future Based Design
-        </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,23 +1,10 @@
 import type { Metadata } from "next";
-import { Sora, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--font-sora",
-  weight: ["300", "400", "600"],
-});
-
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  variable: "--font-bebas",
-  weight: "400",
-});
-
 export const metadata: Metadata = {
-  title: "Wavy Studios",
-  description: "Studio de Design e Tecnologia",
+  title: "SG Studio",
+  description: "Estúdio de Captação Vocal & Music",
   icons: { icon: "/favicon.ico" },
 };
 
@@ -29,9 +16,12 @@ export default function RootLayout({
   return (
     <html lang="pt" className="dark">
       <head>
+        <link href="https://fonts.googleapis.com" rel="preconnect" />
+        <link crossOrigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@300;400;600&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${sora.variable} ${bebasNeue.variable} font-sans`}>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
