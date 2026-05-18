@@ -76,7 +76,7 @@ export default function AdminDashboard() {
         <div className="db-page-sub">Monitorizar métricas e gerir a plataforma</div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 16 }}>
+      <div className="db-grid-main">
         {/* Left column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Welcome card */}
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* 4 Stat cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <div className="db-grid-4">
             <div className="db-card red-glow">
               <div className="db-card-label"><div className="dot" />Clientes Ativos</div>
               <div className="db-stat-val">{stats?.clientes_ativos || 0}</div>

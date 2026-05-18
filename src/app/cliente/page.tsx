@@ -30,7 +30,7 @@ export default function ClienteDashboard() {
       </div>
 
       {/* 4 stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 18 }}>
+      <div className="db-grid-4">
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Horas restantes</div>
           <div className="db-stat-val">{weekly?.horas_restantes?.toFixed(1) || 0}<span className="u">h</span></div>
@@ -77,7 +77,7 @@ export default function ClienteDashboard() {
       </div>
 
       {/* Sessions table + Plano info */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, marginBottom: 18 }}>
+      <div className="db-grid-main-sm">
         <div className="db-card">
           <div className="db-card-label"><div className="dot" />Sessões marcadas</div>
           <table className="db-table">
