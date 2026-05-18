@@ -5,9 +5,9 @@ export function PricingSection() {
     <section className="pricing-section" id="pricing">
       {/* Centered header like reference */}
       <div style={{ textAlign: "center", marginBottom: 80 }}>
-        <h2 className="bebas" style={{ fontSize: "clamp(48px, 7vw, 80px)", textTransform: "uppercase", lineHeight: .95, letterSpacing: ".02em", marginBottom: 20 }}>Subscrições Mensais</h2>
+        <h2 className="bebas" style={{ fontSize: "clamp(48px, 7vw, 80px)", textTransform: "uppercase", lineHeight: .95, letterSpacing: ".02em", marginBottom: 20 }}>Escolhe o teu ritmo</h2>
         <p style={{ maxWidth: 600, margin: "0 auto", fontSize: 15, fontWeight: 300, color: "var(--text2)", lineHeight: 1.8 }}>
-          Oferecemos planos flexíveis para artistas em diferentes estágios da tua jornada musical, desde quem está a começar até quem já vive da música. Cada pack foi pensado para dar o máximo de valor, organização e qualidade em cada sessão.
+          Sem contratos longos, sem surpresas. Escolhe o plano que encaixa na tua vida, marca as sessões quando quiseres, e foca-te no que importa — a tua música.
         </p>
         <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
           <div className="glass" style={{ padding: "6px 24px", borderRadius: 40, fontSize: 10, fontWeight: 600, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--text3)" }}>Mensal</div>

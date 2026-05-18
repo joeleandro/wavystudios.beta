@@ -14,7 +14,7 @@ export function ArtistsSection() {
       </div>
 
       <div style={{ textAlign: "center", marginBottom: 60, position: "relative", zIndex: 1 }}>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".6em", textTransform: "uppercase", color: "var(--text3)", marginBottom: 16, display: "block" }}>Nosso Coletivo</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".6em", textTransform: "uppercase", color: "var(--text3)", marginBottom: 16, display: "block" }}>Quem passa por aqui</span>
         <h2 className="artists-title" style={{ marginBottom: 0 }}>ARTISTAS</h2>
         <div style={{ width: 80, height: 1, background: "var(--primary-c)", margin: "24px auto 0" }} />
       </div>
@@ -40,7 +40,7 @@ export function ArtistsSection() {
 
       <div className="artists-quote" style={{ marginTop: 56, position: "relative", zIndex: 1 }}>
         <div className="artists-quote-line" />
-        <p>&ldquo;Aqueles que trazem arte às pessoas com os olhos e ouvidos abertos.&rdquo;</p>
+        <p>&ldquo;Cada voz que entra aqui sai com algo que não existia antes.&rdquo;</p>
       </div>
 
       {/* Inline keyframes */}

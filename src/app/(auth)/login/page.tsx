@@ -55,9 +55,15 @@ export default function LoginPage() {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: "100vh" }}>
-      {/* LEFT BRAND PANEL */}
+      {/* LEFT BRAND PANEL — with animated background */}
       <div className="login-left">
         <div className="login-left-bg" />
+        {/* Animated orbs */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "20%", left: "30%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,180,168,.15) 0%, transparent 60%)", animation: "hero-orb1 10s ease-in-out infinite alternate" }} />
+          <div style={{ position: "absolute", bottom: "10%", right: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.04) 0%, transparent 50%)", animation: "hero-orb2 14s ease-in-out infinite alternate" }} />
+          <div style={{ position: "absolute", top: "60%", left: "10%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,0,0,.2) 0%, transparent 70%)", animation: "hero-orb3 8s ease-in-out infinite alternate" }} />
+        </div>
         <svg className="login-left-geo" viewBox="0 0 800 800">
           <path d="M400,0 L800,400 L400,800 L0,400 Z" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="1" />
           <circle cx="400" cy="400" r="300" fill="none" stroke="rgba(255,255,255,.08)" strokeDasharray="10 20" strokeWidth="0.8" />
@@ -65,8 +71,13 @@ export default function LoginPage() {
         <div className="login-brand">
           <div className="login-brand-name bebas">SG<br />Studio</div>
           <div className="login-brand-sub">Sound &amp; Vision · Lisboa</div>
-          <div className="login-brand-quote">&ldquo;O estúdio onde o som encontra a sua forma definitiva.&rdquo;</div>
+          <div className="login-brand-quote">Onde cada sessão te aproxima do som que tens na cabeça.</div>
         </div>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes hero-orb1 { from { transform: translate(0, 0) scale(1); opacity: .7; } to { transform: translate(-20px, 15px) scale(1.1); opacity: 1; } }
+          @keyframes hero-orb2 { from { transform: translate(0, 0) scale(1); opacity: .5; } to { transform: translate(15px, -10px) scale(1.1); opacity: .8; } }
+          @keyframes hero-orb3 { from { transform: scale(1); opacity: .6; } to { transform: scale(1.2); opacity: 1; } }
+        `}} />
       </div>
 
       {/* RIGHT FORM */}
