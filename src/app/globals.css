@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #050505;
+  --color-surface: #0e0e0e;
+  --color-surface-container: #1c1b1b;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353534;
+  --color-surface-bright: #3a3939;
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #e3beb8;
+  --color-outline: #aa8984;
+  --color-outline-variant: #5a403c;
+  --color-primary: #ffb4a8;
+  --color-primary-container: #8b0000;
+  --color-on-primary: #690000;
+  --color-on-primary-container: #ff907f;
+  --color-secondary: #c8c6c5;
+  --color-secondary-container: #474746;
+  --color-tertiary: #c8c6c6;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-on-surface: #313030;
+
+  --font-sans: 'Sora', system-ui, sans-serif;
+  --font-display: 'Bebas Neue', sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    @apply bg-background text-on-surface antialiased;
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    @apply bg-primary-container text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .burgundy-glow {
+    box-shadow: 0 0 60px rgba(139, 0, 0, 0.15);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 30px rgba(255, 180, 168, 0.2);
+  }
+
+  .text-headline {
+    color: rgba(255, 255, 255, 1.0);
+  }
+
+  .text-subheadline {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .text-label-opacity {
+    color: rgba(255, 255, 255, 0.60);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
