@@ -2,8 +2,6 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 
 interface Stats {
   clientes_ativos: number;
@@ -46,10 +44,7 @@ export default function AdminDashboard() {
 
   async function fetchStats() {
     const res = await fetch("/api/stats");
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data);
-    }
+    if (res.ok) setStats(await res.json());
   }
 
   async function fetchNotificacoes() {
@@ -67,330 +62,199 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessao_id: sessaoId, estado }),
     });
-    if (res.ok) {
-      fetchStats();
-      fetchNotificacoes();
-    }
+    if (res.ok) { fetchStats(); fetchNotificacoes(); }
   }
 
   const userName = session?.user?.name || "Admin";
+  const hours = currentTime.getHours().toString().padStart(2, "0");
+  const mins = currentTime.getMinutes().toString().padStart(2, "0");
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-label-opacity text-xs mb-1">
-            <span className="material-symbols-outlined text-sm">home</span>
-            <span className="text-white/20">/</span>
-            <span>Dashboard</span>
-          </div>
-          <h1 className="text-2xl font-semibold text-headline">Overview</h1>
-          <p className="text-sm text-label-opacity mt-0.5">
-            Monitorizar métricas e gerir a plataforma
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <div className="relative">
-            <button className="w-10 h-10 glass-card rounded-xl flex items-center justify-center text-white/60 hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-xl">notifications</span>
-              {naoLidas > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-container rounded-full text-[9px] font-bold text-white flex items-center justify-center">
-                  {naoLidas}
-                </span>
-              )}
-            </button>
-          </div>
-          <div className="glass-card rounded-xl px-4 py-2 flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary-container/20 rounded-lg flex items-center justify-center">
-              <span className="text-primary text-xs font-bold">
-                {userName.split(" ").map(n => n[0]).join("")}
-              </span>
-            </div>
-            <span className="text-sm font-medium">{userName}</span>
-          </div>
-        </div>
+    <div style={{ maxWidth: 1400 }}>
+      <div style={{ marginBottom: 26 }}>
+        <div className="db-page-title bebas">Overview</div>
+        <div className="db-page-sub">Monitorizar métricas e gerir a plataforma</div>
       </div>
 
-      {/* Grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main column */}
-        <div className="lg:col-span-2 space-y-6">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 16 }}>
+        {/* Left column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Welcome card */}
-          <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-primary-container/5 rounded-full blur-[60px]" />
-            <div className="relative z-10 flex justify-between items-start">
+          <div className="db-card red-glow" style={{ position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, width: 200, height: 200, background: "radial-gradient(circle, rgba(139,0,0,.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <h2 className="text-xl font-light text-headline">
-                  Olá, {userName.split(" ")[0]}
-                </h2>
-                <p className="text-sm text-label-opacity mt-1">
-                  Pronto para gerir o estúdio hoje
-                </p>
-                <div className="mt-4 font-[var(--font-display)] text-5xl text-headline tracking-wide">
-                  {format(currentTime, "HH:mm")}
-                  <span className="text-lg text-label-opacity ml-2 font-sans font-light">
-                    {format(currentTime, "aa").toUpperCase()}
+                <div style={{ fontSize: 18, fontWeight: 300, color: "var(--text)" }}>Olá, {userName.split(" ")[0]}</div>
+                <div style={{ fontSize: 13, color: "var(--text3)", marginTop: 4 }}>Pronto para gerir o estúdio hoje</div>
+                <div className="bebas" style={{ fontSize: 52, marginTop: 16, color: "var(--text)", letterSpacing: ".02em" }}>
+                  {hours}:{mins}
+                  <span style={{ fontSize: 16, color: "var(--text3)", marginLeft: 8, fontFamily: "'Sora', sans-serif", fontWeight: 300 }}>
+                    {currentTime.getHours() >= 12 ? "PM" : "AM"}
                   </span>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-label-opacity">
-                  {format(currentTime, "EEEE, d 'de' MMMM", { locale: pt })}
-                </p>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 12, color: "var(--text3)" }}>
+                  {currentTime.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard
-              icon="group"
-              label="Clientes Ativos"
-              value={stats?.clientes_ativos?.toString() || "0"}
-              trend="+1"
-            />
-            <StatCard
-              icon="schedule"
-              label="Horas este Mês"
-              value={`${stats?.horas_mes || 0}h`}
-              trend=""
-            />
-            <StatCard
-              icon="event_available"
-              label="Sessões Hoje"
-              value={stats?.sessoes_hoje?.toString() || "0"}
-              trend=""
-            />
-            <StatCard
-              icon="trending_up"
-              label="Ocupação"
-              value={`${stats?.ocupacao || 0}%`}
-              trend="+5%"
-            />
+          {/* 4 Stat cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+            <div className="db-card red-glow">
+              <div className="db-card-label"><div className="dot" />Clientes Ativos</div>
+              <div className="db-stat-val">{stats?.clientes_ativos || 0}</div>
+              <div className="db-stat-desc">registados</div>
+              <div className="db-badge g">▲ +1</div>
+            </div>
+            <div className="db-card red-glow">
+              <div className="db-card-label"><div className="dot" />Horas Mês</div>
+              <div className="db-stat-val">{stats?.horas_mes || 0}<span className="u">h</span></div>
+              <div className="db-stat-desc">trabalhadas</div>
+            </div>
+            <div className="db-card red-glow">
+              <div className="db-card-label"><div className="dot" />Sessões Hoje</div>
+              <div className="db-stat-val">{stats?.sessoes_hoje || 0}</div>
+              <div className="db-stat-desc">agendadas</div>
+            </div>
+            <div className="db-card red-glow">
+              <div className="db-card-label"><div className="dot" />Ocupação</div>
+              <div className="db-stat-val">{stats?.ocupacao || 0}<span className="u">%</span></div>
+              <div className="db-stat-desc">do estúdio</div>
+              <div className="db-bar"><div className="db-bar-fill" style={{ width: `${stats?.ocupacao || 0}%` }} /></div>
+            </div>
           </div>
 
           {/* Pending sessions */}
-          <div className="glass-card rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-medium text-headline">Sessões Pendentes</h3>
-                <p className="text-xs text-label-opacity mt-0.5">
-                  {stats?.sessoes_pendentes || 0} aguardam confirmação
-                </p>
-              </div>
-              <span className="material-symbols-outlined text-primary">pending_actions</span>
+          <div className="db-card">
+            <div className="db-card-label" style={{ justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div className="dot" />Sessões Pendentes</div>
+              <span style={{ fontSize: 10, color: "var(--primary)" }}>{stats?.sessoes_pendentes || 0} aguardam</span>
             </div>
-            
-            <div className="space-y-3">
-              {stats?.sessoes_recentes
-                ?.filter(s => s.estado === "pendente")
-                .map((sessao) => (
-                  <div key={sessao.id} className="flex items-center justify-between p-4 bg-surface-container/50 rounded-xl border border-white/5 hover:border-primary-container/20 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-primary-container/10 rounded-lg flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary text-sm">mic</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-headline">{sessao.cliente_nome}</p>
-                        <p className="text-xs text-label-opacity">
-                          {sessao.tipo} • {sessao.data} • {sessao.hora_inicio}–{sessao.hora_fim}
-                        </p>
-                      </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {stats?.sessoes_recentes?.filter(s => s.estado === "pendente").map((sessao) => (
+                <div key={sessao.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 10, border: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, background: "rgba(139,0,0,.1)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--primary)" }}>mic</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleSessionAction(sessao.id, "confirmada")}
-                        className="w-8 h-8 bg-green-900/20 hover:bg-green-900/40 text-green-400 rounded-lg flex items-center justify-center transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">check</span>
-                      </button>
-                      <button
-                        onClick={() => handleSessionAction(sessao.id, "cancelada")}
-                        className="w-8 h-8 bg-error-container/10 hover:bg-error-container/20 text-error rounded-lg flex items-center justify-center transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{sessao.cliente_nome}</div>
+                      <div style={{ fontSize: 11, color: "var(--text3)" }}>{sessao.tipo} • {sessao.data} • {sessao.hora_inicio}–{sessao.hora_fim}</div>
                     </div>
                   </div>
-                ))}
-              
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => handleSessionAction(sessao.id, "confirmada")} style={{ width: 30, height: 30, background: "rgba(34,197,94,.1)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(34,197,94,.2)" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#4ade80" }}>check</span>
+                    </button>
+                    <button onClick={() => handleSessionAction(sessao.id, "cancelada")} style={{ width: 30, height: 30, background: "rgba(239,68,68,.1)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(239,68,68,.2)" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#f87171" }}>close</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
               {(!stats?.sessoes_recentes || stats.sessoes_recentes.filter(s => s.estado === "pendente").length === 0) && (
-                <p className="text-center text-label-opacity text-sm py-8">
-                  Nenhuma sessão pendente
-                </p>
+                <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text3)", fontSize: 12 }}>Nenhuma sessão pendente</div>
               )}
             </div>
           </div>
 
-          {/* All recent sessions */}
-          <div className="glass-card rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-medium text-headline">Sessões Recentes</h3>
-                <p className="text-xs text-label-opacity mt-0.5">Últimas sessões agendadas</p>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-[0.15em] text-label-opacity">
-                    <th className="text-left py-3 px-2">Cliente</th>
-                    <th className="text-left py-3 px-2">Tipo</th>
-                    <th className="text-left py-3 px-2">Data</th>
-                    <th className="text-left py-3 px-2">Horário</th>
-                    <th className="text-left py-3 px-2">Estado</th>
+          {/* Sessions table */}
+          <div className="db-card">
+            <div className="db-card-label"><div className="dot" />Sessões Recentes</div>
+            <table className="db-table">
+              <thead><tr>
+                <th>Cliente</th><th>Tipo</th><th>Data</th><th>Horário</th><th>Estado</th>
+              </tr></thead>
+              <tbody>
+                {stats?.sessoes_recentes?.map((s) => (
+                  <tr key={s.id}>
+                    <td style={{ color: "var(--text)", fontWeight: 500 }}>{s.cliente_nome}</td>
+                    <td style={{ textTransform: "capitalize" }}>{s.tipo.replace("_", "/")}</td>
+                    <td>{s.data}</td>
+                    <td>{s.hora_inicio}–{s.hora_fim}</td>
+                    <td>
+                      <span className={`status-pill ${s.estado === "confirmada" ? "sp-ok" : s.estado === "pendente" ? "sp-pend" : s.estado === "cancelada" ? "sp-cancel" : "sp-done"}`}>
+                        {s.estado}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {stats?.sessoes_recentes?.map((sessao) => (
-                    <tr key={sessao.id} className="border-t border-white/5">
-                      <td className="py-3 px-2 text-headline">{sessao.cliente_nome}</td>
-                      <td className="py-3 px-2 text-label-opacity capitalize">{sessao.tipo.replace("_", "/")}</td>
-                      <td className="py-3 px-2 text-label-opacity">{sessao.data}</td>
-                      <td className="py-3 px-2 text-label-opacity">{sessao.hora_inicio}–{sessao.hora_fim}</td>
-                      <td className="py-3 px-2">
-                        <SessionBadge estado={sessao.estado} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Right column — Insights */}
-        <div className="space-y-6">
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Revenue */}
-          <div className="glass-card rounded-2xl p-6">
-            <h3 className="text-lg font-medium text-headline mb-1">Receita Mensal</h3>
-            <p className="text-xs text-label-opacity mb-6">Clientes ativos × plano</p>
-            <div className="text-center">
-              <span className="font-[var(--font-display)] text-5xl text-headline">
-                €{stats?.receita_mes || 0}
-              </span>
-              <p className="text-xs text-label-opacity mt-2">
-                {stats?.clientes_ativos || 0} clientes ativos
-              </p>
+          <div className="db-card red-glow">
+            <div className="db-card-label"><div className="dot" />Receita Mensal</div>
+            <div style={{ textAlign: "center", padding: "12px 0" }}>
+              <div className="db-stat-val bebas" style={{ fontSize: 48 }}>€{stats?.receita_mes || 0}</div>
+              <div className="db-stat-desc">{stats?.clientes_ativos || 0} clientes ativos</div>
             </div>
           </div>
 
-          {/* Insights donut */}
-          <div className="glass-card rounded-2xl p-6">
-            <h3 className="text-lg font-medium text-headline mb-1">Performance</h3>
-            <p className="text-xs text-label-opacity mb-6">Métricas do estúdio</p>
-            
-            {/* Visual metrics */}
-            <div className="flex justify-center mb-8">
-              <div className="relative w-40 h-40">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                  <circle 
-                    cx="50" cy="50" r="40" fill="none" 
-                    stroke="#8b0000" strokeWidth="8"
-                    strokeDasharray={`${(stats?.ocupacao || 0) * 2.51} 251`}
-                    strokeLinecap="round"
-                  />
-                  <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                  <circle 
-                    cx="50" cy="50" r="30" fill="none" 
-                    stroke="#ffb4a8" strokeWidth="6"
-                    strokeDasharray={`${Math.min(100, ((stats?.horas_mes || 0) / 50) * 100) * 1.88} 188`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-headline">{stats?.ocupacao || 0}%</span>
+          {/* Performance ring */}
+          <div className="db-card red-glow">
+            <div className="db-card-label"><div className="dot" />Performance</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "8px 0" }}>
+              <svg width="108" height="108" viewBox="0 0 108 108" style={{ flexShrink: 0 }}>
+                <circle cx="54" cy="54" r="40" fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="10" />
+                <circle cx="54" cy="54" r="40" fill="none" stroke="url(#rg)" strokeWidth="10"
+                  strokeDasharray="251.3" strokeDashoffset={251.3 - (251.3 * (stats?.ocupacao || 0) / 100)} strokeLinecap="round" transform="rotate(-90 54 54)" />
+                <defs>
+                  <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b0000" /><stop offset="100%" stopColor="#ffb4a8" />
+                  </linearGradient>
+                </defs>
+                <text x="54" y="50" textAnchor="middle" fill="#e5e2e1" fontFamily="'Bebas Neue', sans-serif" fontSize="19">{stats?.ocupacao || 0}%</text>
+                <text x="54" y="62" textAnchor="middle" fill="rgba(229,226,225,.4)" fontSize="8" fontFamily="'Sora', sans-serif">ocupação</text>
+              </svg>
+              <div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--text2)" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--primary)" }} />Ocupação {stats?.ocupacao || 0}%
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--text2)" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#facc15" }} />{stats?.horas_mes || 0}h trabalhadas
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--text2)" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,.15)" }} />{stats?.sessoes_pendentes || 0} pendentes
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <MetricRow color="bg-primary-container" label="Ocupação" sublabel="Taxa do estúdio" value={`${stats?.ocupacao || 0}%`} />
-              <MetricRow color="bg-primary" label="Horas Trabalhadas" sublabel="Este mês" value={`${stats?.horas_mes || 0}h`} />
-              <MetricRow color="bg-secondary" label="Sessões Pendentes" sublabel="Aguardam ação" value={`${stats?.sessoes_pendentes || 0}`} />
             </div>
           </div>
 
           {/* Notifications */}
-          <div className="glass-card rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-headline">Notificações</h3>
-              {naoLidas > 0 && (
-                <span className="text-[10px] bg-primary-container/20 text-primary px-2 py-0.5 rounded-full">
-                  {naoLidas} novas
-                </span>
-              )}
+          <div className="db-card">
+            <div className="db-card-label" style={{ justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div className="dot" />Notificações</div>
+              {naoLidas > 0 && <span style={{ fontSize: 10, color: "var(--primary)" }}>{naoLidas} novas</span>}
             </div>
-            <div className="space-y-3 max-h-64 overflow-y-auto no-scrollbar">
-              {notificacoes.map((n) => (
-                <div key={n.id} className={`p-3 rounded-lg border transition-colors ${
-                  n.lida ? "border-white/5 bg-transparent" : "border-primary-container/20 bg-primary-container/5"
-                }`}>
-                  <p className="text-xs text-on-surface">{n.mensagem}</p>
-                  <p className="text-[10px] text-label-opacity mt-1">
-                    {new Date(n.criada_em).toLocaleString("pt-PT")}
-                  </p>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {notificacoes.slice(0, 5).map((n) => (
+                <div key={n.id} className="notif-item-db">
+                  <div className={`notif-ico-db ${n.lida ? "nic-r" : "nic-g"}`}>
+                    <span className="material-symbols-outlined">{n.lida ? "notifications" : "check_circle"}</span>
+                  </div>
+                  <div>
+                    <div className="notif-txt">{n.mensagem}</div>
+                    <div className="notif-tm">{new Date(n.criada_em).toLocaleString("pt-PT")}</div>
+                  </div>
                 </div>
               ))}
               {notificacoes.length === 0 && (
-                <p className="text-center text-label-opacity text-sm py-4">Sem notificações</p>
+                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text3)", fontSize: 12 }}>Sem notificações</div>
               )}
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function StatCard({ icon, label, value, trend }: { icon: string; label: string; value: string; trend: string }) {
-  return (
-    <div className="glass-card rounded-xl p-4 group hover:burgundy-glow transition-all">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="material-symbols-outlined text-sm text-white/40">{icon}</span>
-        <span className="text-[10px] text-label-opacity uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="flex items-end justify-between">
-        <span className="text-2xl font-semibold text-headline">{value}</span>
-        {trend && (
-          <span className="text-[10px] text-green-400 flex items-center gap-0.5">
-            <span className="material-symbols-outlined text-xs">trending_up</span>
-            {trend}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MetricRow({ color, label, sublabel, value }: { color: string; label: string; sublabel: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`w-3 h-3 rounded-full ${color}`} />
-      <div className="flex-1">
-        <p className="text-sm text-headline">{label}</p>
-        <p className="text-[10px] text-label-opacity">{sublabel}</p>
-      </div>
-      <span className="text-sm font-medium text-headline">{value}</span>
-    </div>
-  );
-}
-
-function SessionBadge({ estado }: { estado: string }) {
-  const styles: Record<string, string> = {
-    pendente: "bg-yellow-900/20 text-yellow-400 border-yellow-900/30",
-    confirmada: "bg-green-900/20 text-green-400 border-green-900/30",
-    cancelada: "bg-red-900/20 text-red-400 border-red-900/30",
-    concluida: "bg-blue-900/20 text-blue-400 border-blue-900/30",
-  };
-  
-  return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${styles[estado] || ""}`}>
-      {estado}
-    </span>
   );
 }
