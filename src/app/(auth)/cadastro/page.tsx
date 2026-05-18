@@ -32,6 +32,7 @@ export default function CadastroPage() {
       password,
       options: {
         data: { nome, telefone },
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     });
 
