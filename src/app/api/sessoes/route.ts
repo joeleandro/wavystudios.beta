@@ -1,137 +1,142 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import getDb from "@/lib/db";
-import { bookSession, getAvailableSlots } from "@/lib/session-logic";
+import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseServer } from '@/lib/supabase/server'
+import { verificarConflito, calcularHoraFim, obterSlotsDisponiveis } from '@/lib/validations/sessoes'
+import { verificarHorasSemana } from '@/lib/validations/horas'
+import { emailNovaSessaoAdmin } from '@/lib/notifications/email'
+import { wppNovaSessaoAdmin } from '@/lib/notifications/whatsapp'
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const db = getDb();
-  const user = session.user as { id: string; role: string };
-  const { searchParams } = new URL(req.url);
-  const data = searchParams.get("data");
-  const clienteId = searchParams.get("cliente_id");
+  const { searchParams } = new URL(req.url)
+  const data = searchParams.get('data')
+  const slots = searchParams.get('slots')
+  const duracao = parseInt(searchParams.get('duracao') || '60')
 
-  // Get available slots for a date
-  if (data && searchParams.get("slots") === "true") {
-    const duracao = parseInt(searchParams.get("duracao") || "60");
-    const slots = getAvailableSlots(data, duracao);
-    return NextResponse.json({ slots });
+  // Return available slots for a date
+  if (data && slots === 'true') {
+    const available = await obterSlotsDisponiveis(supabase, data, duracao)
+    return NextResponse.json({ slots: available })
   }
 
   // Get sessions
-  let query: string;
-  let params: string[];
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
-  if (user.role === "admin") {
-    if (clienteId) {
-      query = `
-        SELECT s.*, c.nome as cliente_nome 
-        FROM sessoes s 
-        JOIN clientes c ON s.cliente_id = c.id 
-        WHERE s.cliente_id = ?
-        ORDER BY s.data DESC, s.hora_inicio
-      `;
-      params = [clienteId];
-    } else {
-      query = `
-        SELECT s.*, c.nome as cliente_nome 
-        FROM sessoes s 
-        JOIN clientes c ON s.cliente_id = c.id 
-        ORDER BY s.data DESC, s.hora_inicio
-      `;
-      params = [];
-    }
-  } else {
-    query = `
-      SELECT s.*, c.nome as cliente_nome 
-      FROM sessoes s 
-      JOIN clientes c ON s.cliente_id = c.id 
-      WHERE s.cliente_id = ?
-      ORDER BY s.data DESC, s.hora_inicio
-    `;
-    params = [user.id];
+  let query = supabase.from('sessoes').select('*, profiles(nome)')
+
+  if (profile?.role !== 'admin') {
+    query = query.eq('cliente_id', user.id)
   }
 
-  const sessoes = db.prepare(query).all(...params);
-  return NextResponse.json({ sessoes });
+  const { data: sessoes } = await query.order('data', { ascending: false }).order('hora_inicio')
+
+  return NextResponse.json({ sessoes: sessoes || [] })
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const body = await req.json()
+  const { data: dataStr, hora_inicio, tipo = 'captacao', notas, cliente_id } = body
+
+  // Determine target client (admin can book for others)
+  const { data: myProfile } = await supabase.from('profiles').select('*, planos(*)').eq('id', user.id).single()
+  const targetId = myProfile?.role === 'admin' && cliente_id ? cliente_id : user.id
+
+  // Get target profile with plan
+  const { data: targetProfile } = await supabase.from('profiles').select('*, planos(*)').eq('id', targetId).single()
+
+  if (!targetProfile || targetProfile.estado !== 'ativo') {
+    return NextResponse.json({ error: 'Subscrição inativa' }, { status: 403 })
   }
 
-  const user = session.user as { id: string; role: string };
-  const body = await req.json();
-  const { tipo, data, hora_inicio, cliente_id } = body;
+  const duracao = targetProfile.planos?.duracao_sessao_min || 60
+  const horaFim = calcularHoraFim(hora_inicio, duracao)
 
-  // Admin can book for any client, client can only book for themselves
-  const targetClienteId = user.role === "admin" && cliente_id ? cliente_id : user.id;
-
-  if (!tipo || !data || !hora_inicio) {
-    return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+  // Check conflict
+  const { conflito, proximoSlot } = await verificarConflito(supabase, dataStr, hora_inicio, horaFim)
+  if (conflito) {
+    return NextResponse.json({
+      error: proximoSlot
+        ? `Conflito de horário. Próximo slot disponível: ${proximoSlot}`
+        : 'Sem slots disponíveis neste dia.',
+    }, { status: 409 })
   }
 
-  const result = bookSession(targetClienteId, tipo, data, hora_inicio);
-  
-  if (!result.success) {
-    return NextResponse.json({ error: result.message }, { status: 409 });
+  // Check weekly hours
+  const { ok, restantes } = await verificarHorasSemana(supabase, targetId, duracao, dataStr)
+  if (!ok) {
+    return NextResponse.json({
+      error: `Horas semanais esgotadas. Restam ${Math.round(restantes / 60 * 10) / 10}h`,
+    }, { status: 400 })
   }
 
-  return NextResponse.json({ message: result.message, sessaoId: result.sessaoId });
+  // Create session
+  const { data: sessao, error } = await supabase.from('sessoes').insert({
+    cliente_id: targetId,
+    tipo,
+    data: dataStr,
+    hora_inicio,
+    hora_fim: horaFim,
+    duracao_minutos: duracao,
+    notas,
+  }).select().single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Create notification for admin
+  await supabase.from('notificacoes').insert({
+    sessao_id: sessao.id,
+    destinatario: 'admin',
+    tipo: 'nova_marcacao',
+    canal: 'dashboard',
+    mensagem: `Nova sessão de ${targetProfile.nome}: ${tipo} em ${dataStr} às ${hora_inicio}`,
+  })
+
+  // Send email + WPP to admin (async, don't block)
+  emailNovaSessaoAdmin(sessao, targetProfile).catch(console.error)
+  wppNovaSessaoAdmin(sessao, targetProfile).catch(console.error)
+
+  return NextResponse.json({ sessao, message: 'Sessão marcada com sucesso!' })
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const body = await req.json()
+  const { sessao_id, estado } = body
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+
+  // Get the session
+  const { data: sessao } = await supabase.from('sessoes').select('*').eq('id', sessao_id).single()
+  if (!sessao) return NextResponse.json({ error: 'Sessão não encontrada' }, { status: 404 })
+
+  // Only admin can confirm/conclude; clients can only cancel their own
+  if (profile?.role !== 'admin') {
+    if (sessao.cliente_id !== user.id) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    if (estado !== 'cancelada') return NextResponse.json({ error: 'Apenas pode cancelar' }, { status: 403 })
   }
 
-  const user = session.user as { id: string; role: string };
-  const body = await req.json();
-  const { sessao_id, estado } = body;
+  await supabase.from('sessoes').update({ estado, atualizado_em: new Date().toISOString() }).eq('id', sessao_id)
 
-  if (!sessao_id || !estado) {
-    return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+  // Notify client
+  if (profile?.role === 'admin' && (estado === 'confirmada' || estado === 'recusada')) {
+    const msg = estado === 'confirmada' ? 'A tua sessão foi confirmada!' : 'A tua sessão foi recusada.'
+    await supabase.from('notificacoes').insert({
+      sessao_id,
+      destinatario: sessao.cliente_id,
+      tipo: estado === 'confirmada' ? 'confirmada' : 'recusada',
+      canal: 'dashboard',
+      mensagem: msg,
+    })
   }
 
-  // Only admin can confirm/conclude, clients can only cancel their own
-  const db = getDb();
-  const sessao = db.prepare("SELECT * FROM sessoes WHERE id = ?").get(sessao_id) as { cliente_id: string; estado: string } | undefined;
-  
-  if (!sessao) {
-    return NextResponse.json({ error: "Sessão não encontrada" }, { status: 404 });
-  }
-
-  if (user.role !== "admin" && sessao.cliente_id !== user.id) {
-    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-  }
-
-  if (user.role !== "admin" && estado !== "cancelada") {
-    return NextResponse.json({ error: "Apenas pode cancelar sessões" }, { status: 403 });
-  }
-
-  db.prepare("UPDATE sessoes SET estado = ? WHERE id = ?").run(estado, sessao_id);
-
-  // Notify client on confirmation/cancellation
-  if (user.role === "admin" && (estado === "confirmada" || estado === "cancelada")) {
-    const { generateId } = require("@/lib/utils");
-    const notifId = `notif_${Date.now()}`;
-    const msg = estado === "confirmada" 
-      ? "A tua sessão foi confirmada!" 
-      : "A tua sessão foi cancelada pelo admin.";
-    
-    db.prepare(`
-      INSERT INTO notificacoes (id, destinatario_id, tipo, canal, mensagem)
-      VALUES (?, ?, ?, 'plataforma', ?)
-    `).run(notifId, sessao.cliente_id, estado === "confirmada" ? "confirmacao" : "cancelamento", msg);
-  }
-
-  return NextResponse.json({ message: `Sessão ${estado}` });
+  return NextResponse.json({ message: `Sessão ${estado}` })
 }

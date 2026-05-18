@@ -1,47 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import getDb from "@/lib/db";
+import { NextResponse } from 'next/server'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const db = getDb();
-  const user = session.user as { id: string };
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
-  const notificacoes = db.prepare(`
-    SELECT * FROM notificacoes 
-    WHERE destinatario_id = ? 
-    ORDER BY criada_em DESC 
-    LIMIT 20
-  `).all(user.id);
+  const destinatario = profile?.role === 'admin' ? 'admin' : user.id
 
-  const naoLidas = db.prepare(`
-    SELECT COUNT(*) as c FROM notificacoes 
-    WHERE destinatario_id = ? AND lida = 0
-  `).get(user.id) as { c: number };
+  const { data: notificacoes } = await supabase
+    .from('notificacoes')
+    .select('*')
+    .eq('destinatario', destinatario)
+    .order('criado_em', { ascending: false })
+    .limit(20)
 
-  return NextResponse.json({ notificacoes, nao_lidas: naoLidas.c });
-}
+  const { count } = await supabase
+    .from('notificacoes')
+    .select('*', { count: 'exact', head: true })
+    .eq('destinatario', destinatario)
+    .eq('lida', false)
 
-export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
-  const db = getDb();
-  const user = session.user as { id: string };
-  const body = await req.json();
-
-  if (body.mark_all_read) {
-    db.prepare("UPDATE notificacoes SET lida = 1 WHERE destinatario_id = ?").run(user.id);
-  } else if (body.id) {
-    db.prepare("UPDATE notificacoes SET lida = 1 WHERE id = ? AND destinatario_id = ?").run(body.id, user.id);
-  }
-
-  return NextResponse.json({ message: "OK" });
+  return NextResponse.json({ notificacoes: notificacoes || [], nao_lidas: count || 0 })
 }
