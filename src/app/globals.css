@@ -1432,3 +1432,269 @@ img { display: block; max-width: 100%; }
   from { transform: translateX(-100%); }
   to { transform: translateX(100%); }
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED RESPONSIVENESS — Booking page + general fixes
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Booking page date grid: 5 cols instead of 7 */
+  .db-card [style*="grid-template-columns: repeat(7, 1fr)"] {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+  /* Booking service type: single col on very small */
+  .booking-option-card { min-height: 80px; }
+}
+
+@media (max-width: 480px) {
+  /* Booking progress labels: hide text, show dots */
+  .db-page-sub { font-size: 10px !important; }
+
+  /* Dashboard greeting */
+  .db-page-title { font-size: 22px !important; }
+}
+
+/* Touch feedback for mobile */
+@media (hover: none) {
+  .booking-option-card:active,
+  .booking-date-btn:active,
+  .booking-slot-btn:active,
+  .booking-producer-btn:active {
+    transform: scale(0.96) !important;
+    transition: transform .1s !important;
+  }
+  .db-card:hover { transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS — Fade, Slide, Stagger
+═══════════════════════════════════════════════════════════════ */
+@keyframes wavy-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wavy-fade-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wavy-fade-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wavy-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes wavy-slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Utility classes */
+.anim-fade-in { animation: wavy-fade-in .5s ease both; }
+.anim-fade-left { animation: wavy-fade-in-left .5s ease both; }
+.anim-fade-right { animation: wavy-fade-in-right .5s ease both; }
+.anim-scale { animation: wavy-scale-in .4s cubic-bezier(.4,0,.2,1) both; }
+.anim-slide-up { animation: wavy-slide-up .6s cubic-bezier(.4,0,.2,1) both; }
+
+/* Staggered children */
+.anim-stagger > *:nth-child(1) { animation-delay: 0s; }
+.anim-stagger > *:nth-child(2) { animation-delay: .06s; }
+.anim-stagger > *:nth-child(3) { animation-delay: .12s; }
+.anim-stagger > *:nth-child(4) { animation-delay: .18s; }
+.anim-stagger > *:nth-child(5) { animation-delay: .24s; }
+.anim-stagger > *:nth-child(6) { animation-delay: .3s; }
+
+/* Page transitions */
+.db-content > * {
+  animation: wavy-fade-in .4s ease both;
+}
+
+/* Hover micro-interactions */
+.db-nav-item { transition: all .2s cubic-bezier(.4,0,.2,1); }
+.db-nav-item:hover { transform: scale(1.08); }
+.db-nav-item:active { transform: scale(0.95); }
+
+.marcar-cta {
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+.marcar-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(139,0,0,.45), 0 0 60px rgba(139,0,0,.1);
+}
+.marcar-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VISUAL RHYMING — Wavy brand motifs
+   Using smooth curves/waves from the Wavy Studios identity
+═══════════════════════════════════════════════════════════════ */
+
+/* Wavy line separator — reusable decorative element */
+.wavy-separator {
+  width: 100%;
+  height: 20px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20'%3E%3Cpath d='M0,10 C25,0 50,20 75,10 C100,0 125,20 150,10 C175,0 200,20 200,10' fill='none' stroke='%238b0000' stroke-width='0.8' opacity='0.3'/%3E%3C/svg%3E") repeat-x center;
+  opacity: 0.5;
+}
+
+/* Wavy accent on section headings */
+.section-title::after,
+.db-page-title::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 3px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, var(--primary-c), transparent);
+  border-radius: 2px;
+}
+
+/* Geometric wavy pattern overlay for cards on hover */
+.db-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-c), transparent);
+  opacity: 0;
+  transition: opacity .4s;
+}
+.db-card:hover::after { opacity: 0.4; }
+
+/* Brand curve clip on hero CTA */
+.hero-side-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 20% 50%, rgba(192,57,43,.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.hero-side-cta { position: relative; overflow: hidden; }
+.hero-side-cta:hover::before { opacity: 1; }
+
+/* Wavy underline for active nav */
+.nav-link.active-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 18px;
+  right: 18px;
+  height: 2px;
+  background: var(--primary-c);
+  border-radius: 1px;
+  animation: wavy-width .3s ease;
+}
+@keyframes wavy-width {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.nav-link { position: relative; }
+
+/* Diamond/wavy motif on pricing cards */
+.pricing-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(139,0,0,.3), transparent);
+  opacity: 0;
+  transition: opacity .4s;
+}
+.pricing-card:hover::before { opacity: 1; }
+
+/* Wavy glow on avatar */
+.db-avatar {
+  transition: box-shadow .3s;
+}
+.db-avatar:hover {
+  box-shadow: 0 0 16px rgba(139,0,0,.3), 0 0 4px rgba(255,180,168,.2);
+}
+
+/* Brand loading spinner (wavy motion) */
+@keyframes wavy-pulse {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+.wavy-loader {
+  display: flex; align-items: center; gap: 3px; height: 20px;
+}
+.wavy-loader span {
+  width: 3px; height: 16px; background: var(--primary-c);
+  border-radius: 2px; animation: wavy-pulse .8s ease infinite;
+}
+.wavy-loader span:nth-child(2) { animation-delay: .15s; }
+.wavy-loader span:nth-child(3) { animation-delay: .3s; }
+.wavy-loader span:nth-child(4) { animation-delay: .45s; }
+.wavy-loader span:nth-child(5) { animation-delay: .6s; }
+
+/* Smooth section entrance (intersection observer ready) */
+.section-appear {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.section-appear.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Floating particles background (subtle brand element) */
+.wavy-particles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wavy-particles::before,
+.wavy-particles::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,0,0,.03) 0%, transparent 70%);
+  animation: wavy-float 20s ease-in-out infinite;
+}
+.wavy-particles::before {
+  top: 20%; left: 10%;
+  animation-delay: 0s;
+}
+.wavy-particles::after {
+  bottom: 20%; right: 10%;
+  animation-delay: -10s;
+  width: 400px; height: 400px;
+}
+@keyframes wavy-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.05); }
+  50% { transform: translate(-10px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 10px) scale(1.03); }
+}
+
+/* Button ripple effect on click */
+.marcar-cta, .login-btn, .cta-btn {
+  position: relative;
+  overflow: hidden;
+}
+.marcar-cta::after, .login-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.marcar-cta:active::after, .login-btn:active::after {
+  opacity: 1;
+}

@@ -76,8 +76,9 @@ export async function POST(req: NextRequest) {
   if (!estado || (estado !== 'ativo' && (myProfile as any)?.role !== 'admin')) {
     console.error('[SESSOES POST] Estado inválido:', estado, 'user:', targetId)
     return NextResponse.json({
-      error: `Subscrição não está ativa (estado atual: "${estado || 'não definido'}"). Contacta o admin para ativação.`,
-      debug: { estado, plano_id: (targetProfile as any).plano_id }
+      error: estado === 'pendente'
+        ? 'A tua conta ainda não foi ativada. O admin irá ativá-la após confirmação do pagamento.'
+        : `Subscrição não está ativa (estado: "${estado || 'não definido'}"). Contacta o admin.`,
     }, { status: 403 })
   }
 

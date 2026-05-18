@@ -27,32 +27,31 @@ export default function ClienteDashboard() {
       .eq("id", user.id)
       .single();
 
-    // FIX: auto-create empty profile if missing
+    // FIX: auto-create profile via server API if missing
     if (error && error.code === "PGRST116") {
-      const fallbackName =
-        user.user_metadata?.nome ||
-        user.user_metadata?.full_name ||
-        user.email?.split("@")[0] ||
-        "Artista";
-
-      const { data: newProfile } = await supabase
-        .from("profiles")
-        .insert({ id: user.id, nome: fallbackName })
-        .select("*, planos(*)")
-        .single();
-
-      if (newProfile) {
-        prof = newProfile;
-      } else {
+      try {
+        const res = await fetch("/api/profile", { method: "POST" });
+        if (res.ok) {
+          // Re-fetch with planos join
+          const { data: refetch } = await supabase
+            .from("profiles")
+            .select("*, planos(*)")
+            .eq("id", user.id)
+            .single();
+          prof = refetch;
+        } else {
+          const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
+          setProfileMissing(true);
+          prof = { nome: fallbackName, estado: "pendente" };
+        }
+      } catch {
+        const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
         setProfileMissing(true);
         prof = { nome: fallbackName, estado: "pendente" };
       }
     } else if (error) {
       console.warn("[Dashboard] Profile fetch warning:", error);
-      const fallbackName =
-        user.user_metadata?.nome ||
-        user.email?.split("@")[0] ||
-        "Artista";
+      const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
       setProfileMissing(true);
       prof = { nome: fallbackName, estado: "pendente" };
     }

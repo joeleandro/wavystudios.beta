@@ -27,12 +27,12 @@ export default function CadastroPage() {
 
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: signUpData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { nome, telefone },
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     });
 
@@ -42,7 +42,25 @@ export default function CadastroPage() {
       return;
     }
 
+    // FIX: Create profile immediately after signup so it exists in DB
+    // This handles the case where email confirmation is disabled (instant login)
+    if (signUpData?.user) {
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: signUpData.user.id,
+        nome,
+        telefone,
+        role: "cliente",
+        estado: "pendente",
+      }, { onConflict: "id" });
+
+      if (profileError) {
+        console.warn("[Cadastro] Could not create profile (may be RLS):", profileError.message);
+        // This is non-blocking — the dashboard layout will auto-create it later
+      }
+    }
+
     setSuccess(true);
+    setLoading(false);
   }
 
   if (success) {

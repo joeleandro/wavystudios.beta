@@ -38,30 +38,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .eq("id", user.id)
         .single();
 
-      // Profile doesn't exist yet — try to create a minimal one
+      // Profile doesn't exist yet — try to create via server API
       if (error && error.code === "PGRST116") {
-        const fallbackName =
-          user.user_metadata?.nome ||
-          user.user_metadata?.full_name ||
-          user.email?.split("@")[0] ||
-          "Artista";
-
-        const { data: newProfile, error: insertErr } = await supabase
-          .from("profiles")
-          .insert({ id: user.id, nome: fallbackName })
-          .select("*, planos(*)")
-          .single();
-
-        if (insertErr) {
-          // Couldn't create — show friendly empty state instead of error
-          console.warn("[Dashboard] Could not auto-create profile:", insertErr);
+        try {
+          const res = await fetch("/api/profile", { method: "POST" });
+          if (res.ok) {
+            const { profile: created } = await res.json();
+            // Re-fetch with planos join
+            const { data: refetch } = await supabase
+              .from("profiles")
+              .select("*, planos(*)")
+              .eq("id", user.id)
+              .single();
+            setProfile(refetch || created);
+          } else {
+            const fallbackName =
+              user.user_metadata?.nome ||
+              user.user_metadata?.full_name ||
+              user.email?.split("@")[0] ||
+              "Artista";
+            setProfileWarning(true);
+            setProfile({ nome: fallbackName, estado: "pendente" });
+          }
+        } catch {
+          const fallbackName =
+            user.user_metadata?.nome ||
+            user.email?.split("@")[0] ||
+            "Artista";
           setProfileWarning(true);
           setProfile({ nome: fallbackName, estado: "pendente" });
-        } else {
-          setProfile(newProfile);
         }
       } else if (error) {
-        // Some other error — keep going with a friendly fallback
         console.warn("[Dashboard] Profile fetch warning:", error);
         const fallbackName =
           user.user_metadata?.nome ||

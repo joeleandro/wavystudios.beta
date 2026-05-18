@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
+    const response = NextResponse.redirect(`${origin}${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,15 +18,43 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            // We need to create a response first to set cookies
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
           },
         },
       }
     )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      // Ensure profile exists after OAuth login
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+
+        if (!existingProfile) {
+          const nome = user.user_metadata?.nome ||
+            user.user_metadata?.full_name ||
+            user.email?.split('@')[0] || 'Artista'
+          const telefone = user.user_metadata?.telefone || null
+
+          await supabase.from('profiles').insert({
+            id: user.id,
+            nome,
+            telefone,
+            role: 'cliente',
+            estado: 'pendente',
+          })
+        }
+      }
+
+      return response
     }
   }
 
