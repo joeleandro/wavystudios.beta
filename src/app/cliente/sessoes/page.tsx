@@ -16,20 +16,18 @@ export default function ClienteSessoesPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [filter, setFilter] = useState<string>("todas");
 
-  useEffect(() => {
-    fetchSessoes();
-  }, []);
+  useEffect(() => { fetchSessoes(); }, []);
 
   async function fetchSessoes() {
     const res = await fetch("/api/sessoes");
     if (res.ok) {
       const data = await res.json();
-      setSessoes(data.sessoes);
+      setSessoes(data.sessoes || []);
     }
   }
 
   async function handleCancel(id: string) {
-    if (!confirm("Tem certeza que deseja cancelar esta sessão? Sessões canceladas não podem ser remarcadas.")) return;
+    if (!confirm("Tem certeza? Sessões canceladas não podem ser remarcadas.")) return;
     const res = await fetch("/api/sessoes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -40,24 +38,28 @@ export default function ClienteSessoesPage() {
 
   const filtered = filter === "todas" ? sessoes : sessoes.filter(s => s.estado === filter);
 
+  const filters = ["todas", "pendente", "confirmada", "concluida", "cancelada"];
+
   return (
-    <div className="max-w-[1000px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-headline">Minhas Sessões</h1>
-        <p className="text-sm text-label-opacity mt-0.5">Histórico de todas as sessões</p>
+    <div style={{ maxWidth: 1000 }}>
+      <div style={{ marginBottom: 26 }}>
+        <div className="db-page-title bebas">Minhas Sessões</div>
+        <div className="db-page-sub">Histórico de todas as sessões</div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-        {["todas", "pendente", "confirmada", "concluida", "cancelada"].map((f) => (
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        {filters.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`text-[10px] uppercase tracking-[0.15em] px-4 py-2 rounded-lg border transition-all ${
-              filter === f
-                ? "bg-primary-container/20 border-primary-container/30 text-primary"
-                : "border-white/5 text-label-opacity hover:text-white hover:border-white/20"
-            }`}
+            style={{
+              fontSize: 10, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase",
+              padding: "8px 16px", borderRadius: 8, cursor: "pointer", transition: "all .2s",
+              background: filter === f ? "rgba(139,0,0,.15)" : "transparent",
+              border: filter === f ? "1px solid rgba(139,0,0,.3)" : "1px solid var(--border)",
+              color: filter === f ? "var(--primary)" : "var(--text3)",
+            }}
           >
             {f}
           </button>
@@ -65,37 +67,30 @@ export default function ClienteSessoesPage() {
       </div>
 
       {/* Sessions list */}
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filtered.map(sessao => (
-          <div key={sessao.id} className="glass-card rounded-xl p-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-primary-container/10 rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-sm">
+          <div key={sessao.id} className="db-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 38, height: 38, background: "rgba(139,0,0,.1)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--primary)" }}>
                   {sessao.tipo === "captacao" ? "mic" : sessao.tipo === "mix_master" ? "tune" : sessao.tipo === "foto" ? "photo_camera" : "music_note"}
                 </span>
               </div>
               <div>
-                <p className="text-sm font-medium text-headline capitalize">
-                  {sessao.tipo.replace("_", "/")}
-                </p>
-                <p className="text-xs text-label-opacity mt-0.5">
-                  {sessao.data} • {sessao.hora_inicio} – {sessao.hora_fim} • {sessao.duracao_minutos}min
-                </p>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", textTransform: "capitalize" }}>{sessao.tipo.replace("_", "/")}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{sessao.data} &bull; {sessao.hora_inicio} – {sessao.hora_fim} &bull; {sessao.duracao_minutos}min</div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-[10px] px-2.5 py-1 rounded-full border ${
-                sessao.estado === "pendente" ? "bg-yellow-900/20 text-yellow-400 border-yellow-900/30" :
-                sessao.estado === "confirmada" ? "bg-green-900/20 text-green-400 border-green-900/30" :
-                sessao.estado === "cancelada" ? "bg-red-900/20 text-red-400 border-red-900/30" :
-                "bg-blue-900/20 text-blue-400 border-blue-900/30"
-              }`}>
-                {sessao.estado}
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className={`status-pill ${
+                sessao.estado === "pendente" ? "sp-pend" :
+                sessao.estado === "confirmada" ? "sp-ok" :
+                sessao.estado === "cancelada" ? "sp-cancel" : "sp-done"
+              }`}>{sessao.estado}</span>
               {(sessao.estado === "pendente" || sessao.estado === "confirmada") && (
                 <button
                   onClick={() => handleCancel(sessao.id)}
-                  className="text-[10px] px-3 py-1.5 bg-error-container/10 text-error rounded-lg hover:bg-error-container/20 transition-colors"
+                  style={{ fontSize: 10, padding: "6px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 6, color: "#f87171", cursor: "pointer", transition: "all .2s" }}
                 >
                   Cancelar
                 </button>
@@ -104,9 +99,9 @@ export default function ClienteSessoesPage() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="text-center py-16">
-            <span className="material-symbols-outlined text-4xl text-white/10 mb-4 block">event_busy</span>
-            <p className="text-sm text-label-opacity">Nenhuma sessão encontrada</p>
+          <div style={{ textAlign: "center", padding: "48px 0" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 36, color: "rgba(255,255,255,.1)", display: "block", marginBottom: 12 }}>event_busy</span>
+            <div style={{ fontSize: 13, color: "var(--text3)" }}>Nenhuma sessão encontrada</div>
           </div>
         )}
       </div>
