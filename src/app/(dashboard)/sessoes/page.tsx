@@ -11,6 +11,7 @@ export default function MarcarSessaoPage() {
   const supabase = createClient();
   const [step, setStep] = useState(1);
   const [tipo, setTipo] = useState("captacao");
+  const [produtor, setProdutor] = useState("");
   const [data, setData] = useState("");
   const [slots, setSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -49,7 +50,7 @@ export default function MarcarSessaoPage() {
     const res = await fetch("/api/sessoes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data, hora_inicio: selectedSlot, tipo }),
+      body: JSON.stringify({ data, hora_inicio: selectedSlot, tipo, produtor }),
     });
     const result = await res.json();
     setLoading(false);
@@ -145,12 +146,29 @@ export default function MarcarSessaoPage() {
 
           {error && <div style={{ background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#f87171" }}>{error}</div>}
 
+          {/* Step 4: Produtor selection */}
           {selectedSlot && (
+            <div className="db-card" style={{ opacity: !selectedSlot ? 0.4 : 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 24, height: 24, background: "rgba(139,0,0,.15)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--primary)", fontWeight: 700 }}>4</div>
+                <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "var(--text)" }}>Produtor</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {["Bere", "Wavy", "Alexandre Campos"].map((p) => (
+                  <button key={p} onClick={() => setProdutor(p)} style={{ padding: "14px 8px", borderRadius: 10, textAlign: "center", cursor: "pointer", background: produtor === p ? "rgba(139,0,0,.1)" : "rgba(255,255,255,.02)", border: produtor === p ? "1px solid rgba(139,0,0,.35)" : "1px solid var(--border)", color: produtor === p ? "var(--primary)" : "var(--text3)", transition: "all .2s", fontSize: 12, fontWeight: 500 }}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {selectedSlot && produtor && (
             <div className="db-card red-glow" style={{ borderColor: "rgba(139,0,0,.3)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>Confirmar</div>
-                  <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}>{tipo} • {data} • {selectedSlot} • {duracao}min</div>
+                  <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}>{tipo} • {data} • {selectedSlot} • {duracao}min • {produtor}</div>
                 </div>
                 <button onClick={handleBook} disabled={loading} className="marcar-cta" style={{ width: "auto", marginTop: 0, padding: "12px 24px", opacity: loading ? 0.5 : 1 }}>
                   {loading ? "A marcar..." : "Confirmar"}

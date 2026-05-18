@@ -30,10 +30,10 @@ export function Navigation() {
 
         {/* Desktop nav links */}
         <div className="nav-links">
-          <Link href="/" className="nav-link active-link">Início</Link>
-          <a href="#pricing" className="nav-link">Serviços</a>
-          <a href="#team" className="nav-link">Sobre</a>
-          <a href="#artists" className="nav-link">Artistas</a>
+          <Link href="/precos" className="nav-link">Serviços</Link>
+          <Link href="/estudios" className="nav-link">Estúdios</Link>
+          <Link href="/sobre" className="nav-link">Sobre</Link>
+          <Link href="/#artists" className="nav-link">Artistas</Link>
         </div>
 
         {/* Desktop: Liquid Metal Login */}
@@ -59,9 +59,9 @@ export function Navigation() {
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-links">
               <Link href="/" onClick={() => setMobileOpen(false)}>Início</Link>
-              <a href="#pricing" onClick={() => setMobileOpen(false)}>Serviços</a>
-              <a href="#team" onClick={() => setMobileOpen(false)}>Sobre</a>
-              <a href="#artists" onClick={() => setMobileOpen(false)}>Artistas</a>
+              <Link href="/precos" onClick={() => setMobileOpen(false)}>Serviços</Link>
+              <Link href="/estudios" onClick={() => setMobileOpen(false)}>Estúdios</Link>
+              <Link href="/sobre" onClick={() => setMobileOpen(false)}>Sobre</Link>
               <Link href="/login" onClick={() => setMobileOpen(false)} style={{ color: "var(--primary)" }}>Login</Link>
             </div>
           </div>

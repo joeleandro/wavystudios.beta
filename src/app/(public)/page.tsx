@@ -1,6 +1,6 @@
 import { Hero } from "@/components/site/hero";
 import { ArtistsSection } from "@/components/site/artists";
-import { PricingSection } from "@/components/site/pricing";
+import { TestimonialsSection } from "@/components/site/testimonials";
 import { TeamSection } from "@/components/site/team";
 
 export default function HomePage() {
@@ -8,7 +8,7 @@ export default function HomePage() {
     <main>
       <Hero />
       <ArtistsSection />
-      <PricingSection />
+      <TestimonialsSection />
       <TeamSection />
     </main>
   );

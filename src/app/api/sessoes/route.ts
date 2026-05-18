@@ -41,23 +41,58 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   const body = await req.json()
-  const { data: dataStr, hora_inicio, tipo = 'captacao', notas, cliente_id } = body
+  const { data: dataStr, hora_inicio, tipo = 'captacao', notas, cliente_id, produtor } = body
 
   // Determine target client (admin can book for others)
-  const { data: myProfile } = await supabase.from('profiles').select('*, planos(*)').eq('id', user.id).single()
-  const targetId = myProfile?.role === 'admin' && cliente_id ? cliente_id : user.id
+  const { data: myProfile, error: myProfileError } = await supabase
+    .from('profiles')
+    .select('*, planos(*)')
+    .eq('id', user.id)
+    .single()
 
-  // Get target profile with plan
-  const { data: targetProfile } = await supabase.from('profiles').select('*, planos(*)').eq('id', targetId).single()
-
-  if (!targetProfile || targetProfile.estado !== 'ativo') {
-    return NextResponse.json({ error: 'Subscrição inativa' }, { status: 403 })
+  if (myProfileError) {
+    console.error('[SESSOES POST] Profile fetch error:', myProfileError)
+    return NextResponse.json({ error: 'Erro ao carregar perfil. Contacta o admin.' }, { status: 500 })
   }
 
-  const duracao = targetProfile.planos?.duracao_sessao_min || 60
+  const targetId = (myProfile as any)?.role === 'admin' && cliente_id ? cliente_id : user.id
+
+  // Get target profile with plan — FIX 2: better error handling
+  const { data: targetProfile, error: targetError } = await supabase
+    .from('profiles')
+    .select('*, planos(*)')
+    .eq('id', targetId)
+    .single()
+
+  if (targetError || !targetProfile) {
+    console.error('[SESSOES POST] Target profile error:', targetError, 'targetId:', targetId)
+    return NextResponse.json({
+      error: 'Perfil não encontrado. Certifica-te que a tua conta foi ativada pelo admin.',
+    }, { status: 404 })
+  }
+
+  // FIX 2: More descriptive error with actual state
+  const estado = (targetProfile as any).estado
+  if (!estado || (estado !== 'ativo' && (myProfile as any)?.role !== 'admin')) {
+    console.error('[SESSOES POST] Estado inválido:', estado, 'user:', targetId)
+    return NextResponse.json({
+      error: `Subscrição não está ativa (estado atual: "${estado || 'não definido'}"). Contacta o admin para ativação.`,
+      debug: { estado, plano_id: (targetProfile as any).plano_id }
+    }, { status: 403 })
+  }
+
+  // Check if plan exists
+  const plano = (targetProfile as any).planos
+  if (!plano) {
+    return NextResponse.json({
+      error: 'Nenhum plano atribuído. Contacta o admin para associar um plano à tua conta.',
+    }, { status: 403 })
+  }
+
+  const duracao = plano.duracao_sessao_min || 60
   const horaFim = calcularHoraFim(hora_inicio, duracao)
 
-  // Check conflict
+  // Check conflict (now with 30min buffer)
   const { conflito, proximoSlot } = await verificarConflito(supabase, dataStr, hora_inicio, horaFim)
   if (conflito) {
     return NextResponse.json({
@@ -75,8 +110,8 @@ export async function POST(req: NextRequest) {
     }, { status: 400 })
   }
 
-  // Create session
-  const { data: sessao, error } = await supabase.from('sessoes').insert({
+  // Create session — FEATURE: include produtor field
+  const { data: sessao, error: insertError } = await supabase.from('sessoes').insert({
     cliente_id: targetId,
     tipo,
     data: dataStr,
@@ -84,22 +119,27 @@ export async function POST(req: NextRequest) {
     hora_fim: horaFim,
     duracao_minutos: duracao,
     notas,
+    produtor: produtor || null,
   }).select().single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (insertError) {
+    console.error('[SESSOES POST] Insert error:', insertError)
+    return NextResponse.json({ error: insertError.message }, { status: 500 })
+  }
 
-  // Create notification for admin
+  // Create notification for admin — include produtor info
+  const produtorInfo = produtor ? ` com ${produtor}` : ''
   await supabase.from('notificacoes').insert({
     sessao_id: sessao.id,
     destinatario: 'admin',
     tipo: 'nova_marcacao',
     canal: 'dashboard',
-    mensagem: `Nova sessão de ${targetProfile.nome}: ${tipo} em ${dataStr} às ${hora_inicio}`,
+    mensagem: `Nova sessão${produtorInfo} de ${(targetProfile as any).nome}: ${tipo} em ${dataStr} às ${hora_inicio}`,
   })
 
   // Send email + WPP to admin (async, don't block)
-  emailNovaSessaoAdmin(sessao, targetProfile).catch(console.error)
-  wppNovaSessaoAdmin(sessao, targetProfile).catch(console.error)
+  emailNovaSessaoAdmin(sessao, targetProfile).catch((err) => console.error('[EMAIL] Error:', err))
+  wppNovaSessaoAdmin(sessao, targetProfile).catch((err) => console.error('[WPP] Error:', err))
 
   return NextResponse.json({ sessao, message: 'Sessão marcada com sucesso!' })
 }
