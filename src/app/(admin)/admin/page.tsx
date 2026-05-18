@@ -7,11 +7,26 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [sessoes, setSessoes] = useState<any[]>([]);
   const [notifs, setNotifs] = useState<any[]>([]);
+  const [primeiroNome, setPrimeiroNome] = useState("Admin");
   const supabase = createClient();
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("nome")
+        .eq("id", user.id)
+        .single();
+      const nome =
+        prof?.nome?.split(" ")[0] ||
+        user.email?.split("@")[0] ||
+        "Admin";
+      setPrimeiroNome(nome);
+    }
+
     // Clients count
     const { count: clientesAtivos } = await supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "cliente").eq("estado", "ativo");
     // Revenue
@@ -38,7 +53,7 @@ export default function AdminDashboard() {
   return (
     <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
-        <div className="db-page-title bebas">Admin Dashboard</div>
+        <div className="db-page-title bebas">Olá, {primeiroNome} 👋</div>
         <div className="db-page-sub">Gestão do estúdio</div>
       </div>
 

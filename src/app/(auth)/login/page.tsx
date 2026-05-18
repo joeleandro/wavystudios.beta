@@ -69,8 +69,8 @@ export default function LoginPage() {
           <circle cx="400" cy="400" r="300" fill="none" stroke="rgba(255,255,255,.08)" strokeDasharray="10 20" strokeWidth="0.8" />
         </svg>
         <div className="login-brand">
-          <div className="login-brand-name bebas">SG<br />Studio</div>
-          <div className="login-brand-sub">Sound &amp; Vision · Lisboa</div>
+          <div className="login-brand-name bebas">Wavy<br />Studios</div>
+          <div className="login-brand-sub">Captação &amp; Produção · Lisboa · Porto</div>
           <div className="login-brand-quote">Onde cada sessão te aproxima do som que tens na cabeça.</div>
         </div>
         <style dangerouslySetInnerHTML={{ __html: `

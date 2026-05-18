@@ -5,9 +5,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ClienteDashboard() {
+  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [sessoes, setSessoes] = useState<any[]>([]);
   const [horasInfo, setHorasInfo] = useState<any>(null);
+  const [profileMissing, setProfileMissing] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -17,8 +19,43 @@ export default function ClienteDashboard() {
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setUser(user);
 
-    const { data: prof } = await supabase.from("profiles").select("*, planos(*)").eq("id", user.id).single();
+    let { data: prof, error } = await supabase
+      .from("profiles")
+      .select("*, planos(*)")
+      .eq("id", user.id)
+      .single();
+
+    // FIX: auto-create empty profile if missing
+    if (error && error.code === "PGRST116") {
+      const fallbackName =
+        user.user_metadata?.nome ||
+        user.user_metadata?.full_name ||
+        user.email?.split("@")[0] ||
+        "Artista";
+
+      const { data: newProfile } = await supabase
+        .from("profiles")
+        .insert({ id: user.id, nome: fallbackName })
+        .select("*, planos(*)")
+        .single();
+
+      if (newProfile) {
+        prof = newProfile;
+      } else {
+        setProfileMissing(true);
+        prof = { nome: fallbackName, estado: "pendente" };
+      }
+    } else if (error) {
+      console.warn("[Dashboard] Profile fetch warning:", error);
+      const fallbackName =
+        user.user_metadata?.nome ||
+        user.email?.split("@")[0] ||
+        "Artista";
+      setProfileMissing(true);
+      prof = { nome: fallbackName, estado: "pendente" };
+    }
     setProfile(prof);
 
     const { data: sess } = await supabase
@@ -56,14 +93,33 @@ export default function ClienteDashboard() {
   const pct = horasInfo ? Math.round((horasInfo.usadas / Math.max(1, horasInfo.plano)) * 100) : 0;
   const proximaSessao = sessoes.find(s => s.estado === "confirmada" || s.estado === "pendente");
 
+  // FIX: personalized greeting using first name
+  const primeiroNome =
+    profile?.nome?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "artista";
+
   return (
     <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
-        <div className="db-page-title bebas">Olá, {(profile?.nome || "").split(" ")[0] || "Cliente"}</div>
+        <div className="db-page-title bebas">Olá, {primeiroNome} 👋</div>
         <div className="db-page-sub">PLANO {profile?.planos?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}</div>
       </div>
 
-      {profile?.estado === "pendente" && (
+      {/* Friendly empty state instead of error */}
+      {profileMissing && (
+        <div className="db-card" style={{ background: "rgba(234,179,8,.06)", borderColor: "rgba(234,179,8,.2)", marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20, color: "#facc15" }}>info</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>Conta em configuração</div>
+              <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>Entra em contacto connosco para finalizar a tua conta.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profile?.estado === "pendente" && !profileMissing && (
         <div className="db-card" style={{ background: "rgba(234,179,8,.06)", borderColor: "rgba(234,179,8,.2)", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 20, color: "#facc15" }}>hourglass_top</span>

@@ -2,6 +2,13 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 const BUFFER_MINUTES = 30 // 30min buffer between sessions
 
+// Studio operating hours
+export const HORA_ABERTURA = '12:00'
+export const HORA_FECHO = '16:00'
+// Maximum end time including the buffer allowance — last slot may end at 16:00,
+// and the +30min buffer is allowed up to 16:30 so the last slot is not blocked.
+export const HORA_FECHO_COM_BUFFER = '16:30'
+
 export async function verificarConflito(
   supabase: SupabaseClient,
   data: string,
@@ -37,7 +44,7 @@ export async function verificarConflito(
       .order('hora_inicio')
 
     const duracao = timeToMinutes(horaFim) - timeToMinutes(horaInicio)
-    let nextSlot = '09:00'
+    let nextSlot = HORA_ABERTURA
 
     for (const s of allSessions || []) {
       // Account for buffer when finding next slot
@@ -47,7 +54,8 @@ export async function verificarConflito(
       nextSlot = minutesToTime(sessionEndWithBuffer)
     }
 
-    if (timeToMinutes(nextSlot) + duracao > timeToMinutes('22:00')) {
+    // Last possible slot: hora_fim must be <= HORA_FECHO (16:00)
+    if (timeToMinutes(nextSlot) + duracao > timeToMinutes(HORA_FECHO)) {
       return { conflito: true, proximoSlot: undefined }
     }
 
@@ -70,13 +78,24 @@ export async function obterSlotsDisponiveis(
     .order('hora_inicio')
 
   const slots: string[] = []
-  const startHour = 9
-  const endHour = 22
+  const startMinutes = timeToMinutes(HORA_ABERTURA) // 12:00
+  const endMinutes = timeToMinutes(HORA_FECHO) // 16:00
+  const endWithBufferMinutes = timeToMinutes(HORA_FECHO_COM_BUFFER) // 16:30
 
-  for (let minutes = startHour * 60; minutes + duracao <= endHour * 60; minutes += 30) {
-    const slotStart = minutesToTime(minutes)
+  // Generate slots based on duration. The last slot is one whose
+  // hora_fim <= HORA_FECHO (16:00), with the +30min buffer permitted up to 16:30.
+  // Step uses session duration so slots line up cleanly:
+  //   60min → 12:00, 13:00, 14:00, 15:00 (last ends at 16:00)
+  //   90min → 12:00, 13:30 (next would end at 16:30, slightly past close — skipped)
+  //  120min → 12:00, 14:00 (last ends at 16:00)
+  for (let minutes = startMinutes; ; minutes += duracao) {
     const slotEnd = minutes + duracao
-    // FIX 1: Check with 30min buffer on both sides
+    if (slotEnd > endMinutes) break
+    // Buffer rule: hora_fim + 30min must not exceed HORA_FECHO_COM_BUFFER
+    // (16:30) — for the listed step it's always satisfied when slotEnd <= 16:00.
+    if (slotEnd + BUFFER_MINUTES > endWithBufferMinutes) break
+
+    const slotStart = minutesToTime(minutes)
     const hasConflict = (existing || []).some((s: any) => {
       const existStart = timeToMinutes(s.hora_inicio)
       const existEnd = timeToMinutes(s.hora_fim) + BUFFER_MINUTES

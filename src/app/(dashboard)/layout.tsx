@@ -10,10 +10,18 @@ const navItems = [
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
 ];
 
+const bottomNavItems = [
+  { href: "/dashboard", icon: "home", label: "Início" },
+  { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
+  { href: "/dashboard?notif=1", icon: "notifications", label: "Notif." },
+  { href: "/dashboard?perfil=1", icon: "person", label: "Perfil" },
+];
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [profileWarning, setProfileWarning] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -24,29 +32,102 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (!user) { router.push("/login"); return; }
       setUser(user);
 
-      const { data: prof } = await supabase
+      const { data: prof, error } = await supabase
         .from("profiles")
         .select("*, planos(*)")
         .eq("id", user.id)
         .single();
-      setProfile(prof);
+
+      // Profile doesn't exist yet — try to create a minimal one
+      if (error && error.code === "PGRST116") {
+        const fallbackName =
+          user.user_metadata?.nome ||
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "Artista";
+
+        const { data: newProfile, error: insertErr } = await supabase
+          .from("profiles")
+          .insert({ id: user.id, nome: fallbackName })
+          .select("*, planos(*)")
+          .single();
+
+        if (insertErr) {
+          // Couldn't create — show friendly empty state instead of error
+          console.warn("[Dashboard] Could not auto-create profile:", insertErr);
+          setProfileWarning(true);
+          setProfile({ nome: fallbackName, estado: "pendente" });
+        } else {
+          setProfile(newProfile);
+        }
+      } else if (error) {
+        // Some other error — keep going with a friendly fallback
+        console.warn("[Dashboard] Profile fetch warning:", error);
+        const fallbackName =
+          user.user_metadata?.nome ||
+          user.email?.split("@")[0] ||
+          "Artista";
+        setProfileWarning(true);
+        setProfile({ nome: fallbackName, estado: "pendente" });
+      } else {
+        setProfile(prof);
+      }
       setLoading(false);
     }
     getUser();
   }, []);
 
   if (loading) {
-    return <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 32, height: 32, border: "2px solid var(--primary-c)", borderTopColor: "transparent", borderRadius: "50%", animation: "wf-rot 1s linear infinite" }} />
-    </div>;
+    return (
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
+        <aside className="db-sidebar">
+          <div className="db-logo bebas">W</div>
+        </aside>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <header className="db-topbar">
+            <div className="skeleton" style={{ width: 120, height: 14 }} />
+            <div className="skeleton" style={{ width: 100, height: 28, borderRadius: 14 }} />
+          </header>
+          <div className="db-content">
+            <div className="skeleton" style={{ width: 220, height: 30, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: 160, height: 12, marginBottom: 26 }} />
+            <div className="db-grid-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="skeleton" style={{ height: 110 }} />
+              ))}
+            </div>
+            <div className="db-grid-main-sm" style={{ marginTop: 16 }}>
+              <div className="skeleton" style={{ height: 240 }} />
+              <div className="skeleton" style={{ height: 240 }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const initials = (profile?.nome || "U").split(" ").map((n: string) => n[0]).join("").slice(0, 2);
+  const primeiroNome =
+    profile?.nome?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "artista";
+  const initials = (profile?.nome || primeiroNome || "U")
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  // Detect active tab on bottom nav
+  const isActive = (href: string) => {
+    const cleanHref = href.split("?")[0];
+    if (cleanHref === "/dashboard") return pathname === "/dashboard";
+    return pathname?.startsWith(cleanHref);
+  };
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <aside className="db-sidebar">
-        <Link href="/" className="db-logo bebas">SG</Link>
+        <Link href="/" className="db-logo bebas">W</Link>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href} className={`db-nav-item ${pathname === item.href ? "db-active" : ""}`}>
             <span className="material-symbols-outlined">{item.icon}</span>
@@ -71,7 +152,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="db-topbar">
           <div className="db-breadcrumb">
             <span className="material-symbols-outlined" style={{ fontSize: 14 }}>home</span>
-            <span>›</span><span style={{ color: "var(--text2)" }}>Dashboard</span>
+            <span>›</span>
+            <span style={{ color: "var(--text2)" }}>Olá, {primeiroNome} 👋</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div className="db-icon-btn">
@@ -80,13 +162,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="db-user-chip">
               <div className="db-avatar" style={{ width: 28, height: 28, fontSize: 11 }}>{initials}</div>
-              <span style={{ fontSize: 12, color: "var(--text2)" }}>{profile?.nome || "Cliente"}</span>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>{primeiroNome}</span>
             </div>
           </div>
         </header>
         <div className="db-content">
+          {profileWarning && (
+            <div
+              className="db-card"
+              style={{
+                background: "rgba(234,179,8,.06)",
+                borderColor: "rgba(234,179,8,.2)",
+                marginBottom: 18,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 20, color: "#facc15" }}>info</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Conta em configuração</div>
+                  <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>
+                    A tua conta ainda está a ser preparada. Entra em contacto connosco se precisares de assistência.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {children}
         </div>
+
+        {/* Mobile bottom navigation */}
+        <nav className="db-bottom-nav" aria-label="Mobile navigation">
+          {bottomNavItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`db-bottom-nav-item ${isActive(item.href) ? "active" : ""}`}
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="db-bottom-nav-label">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   );

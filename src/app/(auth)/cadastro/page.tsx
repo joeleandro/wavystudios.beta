@@ -77,7 +77,7 @@ export default function CadastroPage() {
           <circle cx="400" cy="400" r="300" fill="none" stroke="rgba(255,255,255,.08)" strokeDasharray="10 20" strokeWidth="0.8" />
         </svg>
         <div className="login-brand">
-          <div className="login-brand-name bebas">SG<br />Studio</div>
+          <div className="login-brand-name bebas">Wavy<br />Studios</div>
           <div className="login-brand-sub">Cria a tua conta</div>
           <div className="login-brand-quote">Após o registo, o admin ativa a tua subscrição e terás acesso ao dashboard para marcares as tuas sessões.</div>
         </div>

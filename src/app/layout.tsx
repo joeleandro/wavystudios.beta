@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SG Studio",
-  description: "Estúdio de Captação Vocal & Music",
+  title: "Wavy Studios",
+  description: "Estúdio de Captação Vocal & Produção Musical",
   icons: { icon: "/favicon.ico" },
 };
 

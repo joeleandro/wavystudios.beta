@@ -23,13 +23,23 @@ export default function MarcarSessaoPage() {
 
   const today = new Date();
   const days = Array.from({ length: 14 }, (_, i) => addDays(today, i + 1));
+  const [primeiroNome, setPrimeiroNome] = useState("artista");
 
   useEffect(() => {
     async function getDuracao() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("planos(duracao_sessao_min)").eq("id", user.id).single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("nome, planos(duracao_sessao_min)")
+        .eq("id", user.id)
+        .single();
       if ((profile as any)?.planos?.duracao_sessao_min) setDuracao((profile as any).planos.duracao_sessao_min);
+      const nome =
+        (profile as any)?.nome?.split(" ")[0] ||
+        user.email?.split("@")[0] ||
+        "artista";
+      setPrimeiroNome(nome);
     }
     getDuracao();
   }, []);
@@ -69,8 +79,8 @@ export default function MarcarSessaoPage() {
   return (
     <div style={{ maxWidth: 720 }}>
       <div style={{ marginBottom: 26 }}>
-        <div className="db-page-title bebas">Marcar Sessão</div>
-        <div className="db-page-sub">Sessões de {duracao}min • Escolhe tipo, data e horário</div>
+        <div className="db-page-title bebas">Olá, {primeiroNome} 👋</div>
+        <div className="db-page-sub">Sessões de {duracao}min • 12h às 16h • Escolhe tipo, data e horário</div>
       </div>
 
       {success ? (
