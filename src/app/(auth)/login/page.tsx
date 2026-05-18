@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seedMsg, setSeedMsg] = useState("");
   const router = useRouter();
   const supabase = createClient();
 
@@ -39,18 +40,50 @@ export default function LoginPage() {
     const testEmail = role === "admin" ? "admin@wavystudios.pt" : "cliente@wavystudios.pt";
     const testPass = role === "admin" ? "admin123" : "cliente123";
 
+    // First try to login
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: testEmail,
       password: testPass,
     });
 
     if (authError) {
-      setError(`Conta de teste "${role}" não existe. Cria primeiro no Supabase.`);
-      setLoading(false);
-      return;
+      // Account doesn't exist — try to create it via seed
+      setSeedMsg("A criar contas de teste...");
+      try {
+        const res = await fetch("/api/seed");
+        const data = await res.json();
+        setSeedMsg("");
+
+        if (!res.ok) {
+          setError(`Erro ao criar contas: ${data.error || "Verifica a configuração do Supabase."}`);
+          setLoading(false);
+          return;
+        }
+
+        // Retry login
+        const { error: retryErr } = await supabase.auth.signInWithPassword({
+          email: testEmail,
+          password: testPass,
+        });
+
+        if (retryErr) {
+          setError(`Contas criadas mas login falhou. Tenta: ${testEmail} / ${testPass}`);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        setSeedMsg("");
+        setError(`Conta "${role}" não existe. Vai a /api/seed para criar as contas de teste.`);
+        setLoading(false);
+        return;
+      }
     }
 
-    router.push(role === "admin" ? "/admin" : "/dashboard");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+      router.push(profile?.role === "admin" ? "/admin" : "/dashboard");
+    }
   }
 
   return (
@@ -106,25 +139,38 @@ export default function LoginPage() {
 
           {/* Test accounts */}
           <div style={{ marginTop: 28, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
-            <p style={{ fontSize: 10, textAlign: "center", color: "var(--text3)", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12 }}>Contas de teste</p>
+            <p style={{ fontSize: 10, textAlign: "center", color: "var(--text3)", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 4 }}>Contas de teste</p>
+            <p style={{ fontSize: 11, textAlign: "center", color: "var(--text3)", marginBottom: 12, lineHeight: 1.5 }}>
+              Se não existirem, serão criadas automaticamente
+            </p>
+
+            {seedMsg && (
+              <div style={{ fontSize: 12, textAlign: "center", color: "#facc15", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, animation: "wf-rot 1s linear infinite" }}>sync</span>
+                {seedMsg}
+              </div>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <button
                 type="button"
                 onClick={() => quickLogin("admin")}
                 disabled={loading}
-                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid rgba(139,0,0,.3)", color: "var(--primary)", background: "rgba(139,0,0,.08)", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s" }}
+                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid rgba(139,0,0,.3)", color: "var(--primary)", background: "rgba(139,0,0,.08)", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s", opacity: loading ? 0.6 : 1 }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 14, display: "block", marginBottom: 4 }}>admin_panel_settings</span>
                 Admin
+                <div style={{ fontSize: 9, opacity: 0.6, marginTop: 2, textTransform: "none", letterSpacing: 0 }}>admin@wavystudios.pt</div>
               </button>
               <button
                 type="button"
                 onClick={() => quickLogin("cliente")}
                 disabled={loading}
-                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text3)", background: "transparent", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s" }}
+                style={{ fontSize: 10, padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", color: "var(--text2)", background: "rgba(255,255,255,.03)", cursor: "pointer", textTransform: "uppercase", letterSpacing: ".15em", transition: "all .2s", opacity: loading ? 0.6 : 1 }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 14, display: "block", marginBottom: 4 }}>person</span>
                 Cliente
+                <div style={{ fontSize: 9, opacity: 0.6, marginTop: 2, textTransform: "none", letterSpacing: 0 }}>cliente@wavystudios.pt</div>
               </button>
             </div>
           </div>

@@ -2,100 +2,125 @@ import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 
 // GET /api/seed — Creates test accounts (admin + cliente)
-// Run once after setting up Supabase
+// Safe to call multiple times — uses upsert
 export async function GET() {
-  const supabase = await createSupabaseAdmin()
+  // Guard: needs service role key
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({
+      error: 'SUPABASE_SERVICE_ROLE_KEY não está configurada.',
+      hint: 'Adiciona SUPABASE_SERVICE_ROLE_KEY ao teu ficheiro .env.local e reinicia o servidor.',
+    }, { status: 500 })
+  }
 
+  const supabase = await createSupabaseAdmin()
   const results: any[] = []
 
-  // 1. Create Admin user
-  const { data: adminUser, error: adminErr } = await supabase.auth.admin.createUser({
-    email: 'admin@wavystudios.pt',
-    password: 'admin123',
-    email_confirm: true,
-    user_metadata: { nome: 'Admin Wavy', telefone: '+351939910528' },
-  })
+  // ── 1. ADMIN ──────────────────────────────────────────────
+  const adminEmail = 'admin@wavystudios.pt'
+  const adminPass  = 'admin123'
 
-  if (adminErr && !adminErr.message.includes('already been registered')) {
-    results.push({ admin: 'error', message: adminErr.message })
-  } else if (adminUser?.user) {
-    // Create/update profile as admin
-    await supabase.from('profiles').upsert({
-      id: adminUser.user.id,
+  // Check if already exists
+  const { data: existingAdmins } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const existingAdmin = existingAdmins?.users?.find(u => u.email === adminEmail)
+
+  let adminId: string | null = existingAdmin?.id ?? null
+
+  if (!adminId) {
+    const { data: newAdmin, error: adminErr } = await supabase.auth.admin.createUser({
+      email: adminEmail,
+      password: adminPass,
+      email_confirm: true,
+      user_metadata: { nome: 'Admin Wavy', telefone: '+351939910528' },
+    })
+    if (adminErr) {
+      results.push({ admin: 'error', message: adminErr.message })
+    } else {
+      adminId = newAdmin.user.id
+      results.push({ admin: 'created', id: adminId })
+    }
+  } else {
+    results.push({ admin: 'already_exists', id: adminId })
+  }
+
+  if (adminId) {
+    const { error: profErr } = await supabase.from('profiles').upsert({
+      id: adminId,
       nome: 'Admin Wavy',
       telefone: '+351939910528',
       role: 'admin',
       estado: 'ativo',
-    })
-    results.push({ admin: 'created', id: adminUser.user.id })
-  } else {
-    // User already exists — find and update role
-    const { data: users } = await supabase.auth.admin.listUsers()
-    const existing = users?.users?.find(u => u.email === 'admin@wavystudios.pt')
-    if (existing) {
-      await supabase.from('profiles').upsert({
-        id: existing.id,
-        nome: 'Admin Wavy',
-        telefone: '+351939910528',
-        role: 'admin',
-        estado: 'ativo',
-      })
-      results.push({ admin: 'already exists, role updated', id: existing.id })
-    }
+    }, { onConflict: 'id' })
+    if (profErr) results.push({ admin_profile: 'error', message: profErr.message })
+    else results.push({ admin_profile: 'ok' })
   }
 
-  // 2. Create Client user
-  const { data: clientUser, error: clientErr } = await supabase.auth.admin.createUser({
-    email: 'cliente@wavystudios.pt',
-    password: 'cliente123',
-    email_confirm: true,
-    user_metadata: { nome: 'João Demo', telefone: '+351911111111' },
-  })
+  // ── 2. CLIENTE ────────────────────────────────────────────
+  const clienteEmail = 'cliente@wavystudios.pt'
+  const clientePass  = 'cliente123'
 
-  if (clientErr && !clientErr.message.includes('already been registered')) {
-    results.push({ cliente: 'error', message: clientErr.message })
-  } else if (clientUser?.user) {
-    await supabase.from('profiles').upsert({
-      id: clientUser.user.id,
+  const existingCliente = existingAdmins?.users?.find(u => u.email === clienteEmail)
+  let clienteId: string | null = existingCliente?.id ?? null
+
+  if (!clienteId) {
+    const { data: newCliente, error: clienteErr } = await supabase.auth.admin.createUser({
+      email: clienteEmail,
+      password: clientePass,
+      email_confirm: true,
+      user_metadata: { nome: 'João Demo', telefone: '+351911111111' },
+    })
+    if (clienteErr) {
+      results.push({ cliente: 'error', message: clienteErr.message })
+    } else {
+      clienteId = newCliente.user.id
+      results.push({ cliente: 'created', id: clienteId })
+    }
+  } else {
+    results.push({ cliente: 'already_exists', id: clienteId })
+  }
+
+  if (clienteId) {
+    // Try with plano_id: 2, fallback to no plan if it doesn't exist
+    const { error: profErr } = await supabase.from('profiles').upsert({
+      id: clienteId,
       nome: 'João Demo',
       telefone: '+351911111111',
-      plano_id: 2, // Professional
+      plano_id: 2,
       role: 'cliente',
       estado: 'ativo',
       data_inicio: new Date().toISOString().split('T')[0],
-    })
-    results.push({ cliente: 'created', id: clientUser.user.id })
-  } else {
-    const { data: users } = await supabase.auth.admin.listUsers()
-    const existing = users?.users?.find(u => u.email === 'cliente@wavystudios.pt')
-    if (existing) {
-      await supabase.from('profiles').upsert({
-        id: existing.id,
+    }, { onConflict: 'id' })
+
+    if (profErr) {
+      // plano_id might not exist — try without it
+      const { error: profErr2 } = await supabase.from('profiles').upsert({
+        id: clienteId,
         nome: 'João Demo',
         telefone: '+351911111111',
-        plano_id: 2,
         role: 'cliente',
         estado: 'ativo',
         data_inicio: new Date().toISOString().split('T')[0],
-      })
-      results.push({ cliente: 'already exists, profile updated', id: existing.id })
+      }, { onConflict: 'id' })
+      if (profErr2) results.push({ cliente_profile: 'error', message: profErr2.message })
+      else results.push({ cliente_profile: 'ok_no_plan', hint: 'Sem plano atribuído — atribui um plano no admin.' })
+    } else {
+      results.push({ cliente_profile: 'ok' })
     }
   }
 
-  // 3. Verify profiles exist
-  const { data: profiles, error: profErr } = await supabase
+  // ── 3. Verify ─────────────────────────────────────────────
+  const { data: profiles } = await supabase
     .from('profiles')
     .select('id, nome, role, estado, plano_id')
+    .in('role', ['admin', 'cliente'])
     .order('role')
 
   return NextResponse.json({
-    message: 'Seed complete!',
+    message: '✅ Seed complete!',
     results,
     profiles: profiles || [],
-    profilesError: profErr?.message || null,
-    instructions: {
-      admin: 'admin@wavystudios.pt / admin123',
-      cliente: 'cliente@wavystudios.pt / cliente123',
+    credentials: {
+      admin:   `${adminEmail} / ${adminPass}`,
+      cliente: `${clienteEmail} / ${clientePass}`,
     },
   })
 }
