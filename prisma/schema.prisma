@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Plano {
+  id                String   @id @default(cuid())
+  nome              String
+  preco_mensal      Float
+  horas_semanais    Int
+  horas_mensais     Int
+  duracao_sessao_min Int
+  mix_master_mes    Int      // -1 = ilimitado
+  sessao_foto       Boolean  @default(false)
+  instrumental      Boolean  @default(false)
+  direcao_criativa  Boolean  @default(false)
+  pagamento_5050    Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  clientes          Cliente[]
+}
+
+model Cliente {
+  id            String        @id @default(cuid())
+  nome          String
+  email         String        @unique
+  telefone      String?
+  plano_id      String?
+  plano         Plano?        @relation(fields: [plano_id], references: [id])
+  data_inicio   DateTime?
+  estado        String        @default("ativo") // ativo | suspenso | cancelado
+  password_hash String
+  role          String        @default("cliente") // cliente | admin
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  sessoes       Sessao[]
+  horas_semana  HorasSemana[]
+  notificacoes  Notificacao[] @relation("NotificacaoDestinatario")
+}
+
+model Sessao {
+  id              String   @id @default(cuid())
+  cliente_id      String
+  cliente         Cliente  @relation(fields: [cliente_id], references: [id])
+  tipo            String   // captacao | mix_master | foto | outro
+  data            String   // YYYY-MM-DD
+  hora_inicio     String   // HH:MM
+  hora_fim        String   // HH:MM
+  duracao_minutos Int
+  estado          String   @default("pendente") // pendente | confirmada | cancelada | concluida
+  criada_em       DateTime @default(now())
+}
+
+model HorasSemana {
+  id              String  @id @default(cuid())
+  cliente_id      String
+  cliente         Cliente @relation(fields: [cliente_id], references: [id])
+  semana_inicio   String  // YYYY-MM-DD (segunda-feira)
+  horas_plano     Float
+  horas_usadas    Float   @default(0)
+  horas_restantes Float
+
+  @@unique([cliente_id, semana_inicio])
+}
+
+model Notificacao {
+  id            String   @id @default(cuid())
+  destinatario_id String
+  destinatario  Cliente  @relation("NotificacaoDestinatario", fields: [destinatario_id], references: [id])
+  tipo          String   // nova_sessao | confirmacao | cancelamento
+  canal         String   // plataforma | whatsapp | push
+  mensagem      String
+  lida          Boolean  @default(false)
+  criada_em     DateTime @default(now())
+}
