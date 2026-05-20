@@ -1119,6 +1119,7 @@ img { display: block; max-width: 100%; }
   .nav-desktop-only { display: none; }
   .nav-links { display: none; }
   .nav-pill { display: none; }
+  .nav-logo-img { width: 32px !important; height: 32px !important; }
 }
 
 /* Tighter spacing on tiny phones */
@@ -1927,6 +1928,7 @@ img { display: block; max-width: 100%; }
    global .main-nav (with hamburger) takes over cleanly over the burgundy hero. */
 @media (max-width: 1024px) {
   body:has(.hw-hero) .hw-nav { display: none !important; }
+  .hw-nav-desktop-only { display: none !important; }
 }
 
 .syne { font-family: 'Syne', 'Bebas Neue', sans-serif; }
@@ -2951,6 +2953,8 @@ img, video, canvas, svg {
        part of the burgundy gradient. */
     background: linear-gradient(180deg, rgba(0,0,0,.22) 0%, transparent 100%);
   }
+  /* Force the global nav visible over hero on mobile (fallback for :has()) */
+  .main-nav { display: flex !important; z-index: 600; }
 }
 
 /* Long emails / values inside mobile contact rows must wrap (no overflow). */

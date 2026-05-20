@@ -23,8 +23,8 @@ export function Hero() {
   return (
     <section className="hw-hero">
 
-      {/* ── inline nav ── */}
-      <nav className="hw-nav">
+      {/* ── inline nav (hidden on mobile via CSS + class) ── */}
+      <nav className="hw-nav hw-nav-desktop-only">
         <Link href="/" className="hw-logo">Wavy Studios</Link>
 
         {/* Pill container — same style as main-nav */}
@@ -150,7 +150,12 @@ export function Hero() {
       </div>
 
       {/* ── scroll cue ── */}
-      <div className="hw-scroll-cue" aria-hidden="true">
+      <div className="hw-scroll-cue" aria-hidden="true" onClick={() => {
+        const hero = document.querySelector('.hw-hero');
+        if (hero?.nextElementSibling) {
+          hero.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
+        }
+      }} style={{ cursor: 'pointer' }}>
         <span>↓</span>
       </div>
 
