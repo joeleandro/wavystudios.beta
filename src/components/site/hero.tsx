@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const services = [
   { num: "#01", label: "Captação Vocal" },
@@ -10,25 +10,41 @@ const services = [
   { num: "#04", label: "Direção Criativa" },
 ];
 
+const heroNavLinks = [
+  { href: "/precos", label: "Serviços" },
+  { href: "/portfolio", label: "Portfólio" },
+  { href: "/cyclo", label: "Cyclo" },
+  { href: "/estudios", label: "Estúdios" },
+  { href: "/sobre", label: "Sobre" },
+];
+
 export function Hero() {
-  const router = useRouter();
+  const pathname = usePathname();
   return (
     <section className="hw-hero">
 
-      {/* ── inline nav (replaces the floating nav on home page) ── */}
+      {/* ── inline nav ── */}
       <nav className="hw-nav">
         <Link href="/" className="hw-logo">Wavy Studios</Link>
-        <div className="hw-nav-links">
-          <Link href="/precos" className="hw-nav-link">Serviços</Link>
-          <Link href="/portfolio" className="hw-nav-link">Portfólio</Link>
-          <Link href="/cyclo" className="hw-nav-link">Cyclo</Link>
-          <Link href="/estudios" className="hw-nav-link">Estúdios</Link>
-          <Link href="/sobre" className="hw-nav-link">Sobre</Link>
+
+        {/* Pill container — same style as main-nav */}
+        <div className="nav-pill hw-nav-pill">
+          {heroNavLinks.map(link => {
+            const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`nav-pill-link${isActive ? " nav-pill-active" : ""}`}
+              >
+                {link.label.toUpperCase()}
+              </Link>
+            );
+          })}
         </div>
-        <button className="hw-btn-contact" onClick={() => router.push("/login")}>
-          Login
-          <span className="hw-btn-arrow">→</span>
-        </button>
+
+        {/* Login pill */}
+        <Link href="/login" className="nav-login-pill">LOGIN</Link>
       </nav>
 
       {/* ── noise grain overlay ── */}

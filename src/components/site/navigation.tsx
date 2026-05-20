@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Início" },
@@ -14,10 +13,11 @@ const navLinks = [
   { href: "/sobre", label: "Sobre" },
 ];
 
+const desktopLinks = navLinks.filter(l => l.href !== "/");
+
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -50,18 +50,25 @@ export function Navigation() {
           />
         </Link>
 
-        {/* Desktop nav links */}
-        <div className="nav-links">
-          <Link href="/precos" className="nav-link">Serviços</Link>
-          <Link href="/portfolio" className="nav-link">Portfólio</Link>
-          <Link href="/cyclo" className="nav-link">Cyclo</Link>
-          <Link href="/estudios" className="nav-link">Estúdios</Link>
-          <Link href="/sobre" className="nav-link">Sobre</Link>
+        {/* Desktop nav — pill container */}
+        <div className="nav-pill nav-desktop-only">
+          {desktopLinks.map(link => {
+            const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`nav-pill-link${isActive ? " nav-pill-active" : ""}`}
+              >
+                {link.label.toUpperCase()}
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Desktop: Login button */}
+        {/* Desktop: Login pill button */}
         <div className="nav-right nav-desktop-only">
-          <LiquidMetalButton label="Login" onClick={() => router.push("/login")} />
+          <Link href="/login" className="nav-login-pill">LOGIN</Link>
         </div>
 
         {/* Mobile: Hamburger button */}
@@ -145,13 +152,10 @@ export function Navigation() {
 
           {/* ── Login button ── */}
           <div className="mm-footer">
-            <button
-              className="mm-login-btn"
-              onClick={() => { close(); router.push("/login"); }}
-            >
+            <Link href="/login" className="mm-login-btn" onClick={close}>
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>login</span>
               Entrar na conta
-            </button>
+            </Link>
           </div>
         </div>
       </div>
