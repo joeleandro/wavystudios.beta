@@ -189,13 +189,23 @@ function ImageModal({
 
 // ─── Main Gallery ─────────────────────────────────────────────────────────────
 
-export function BentoGallery() {
+const DEFAULT_VISIBLE = 5;
+const MAX_VISIBLE = 10;
+
+export function BentoGallery({ showAll = false }: { showAll?: boolean }) {
   const [selectedItem, setSelectedItem] = useState<ImageItem | null>(null);
   const [dragConstraint, setDragConstraint] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [expanded, setExpanded] = useState(showAll);
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement & { _baseX?: number }>(null);
   const dragState = useRef({ startX: 0, currentX: 0, active: false });
+
+  const visibleProjects = showAll
+    ? behanceProjects.slice(0, MAX_VISIBLE)
+    : expanded
+    ? behanceProjects.slice(0, MAX_VISIBLE)
+    : behanceProjects.slice(0, DEFAULT_VISIBLE);
 
   // Calculate drag constraint
   useEffect(() => {
@@ -208,7 +218,7 @@ export function BentoGallery() {
     calc();
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
-  }, []);
+  }, [expanded, showAll]);
 
   // Custom drag handlers
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -247,10 +257,10 @@ export function BentoGallery() {
       {/* Header */}
       <div style={{ textAlign: "center", padding: "0 24px 56px" }}>
         <span className="section-eyebrow" style={{ display: "block", marginBottom: 16 }}>
-          Portfolio
+          Trabalhos
         </span>
         <h2 className="section-title bebas" style={{ letterSpacing: ".04em", lineHeight: 1 }}>
-          ARTISTAS
+          PORTFÓLIO
         </h2>
         <p style={{ maxWidth: 480, margin: "20px auto 0", fontSize: 15, fontWeight: 300, color: "var(--text2)", lineHeight: 1.7 }}>
           Arrasta para explorar os projectos. Clica para ver em detalhe.
@@ -270,7 +280,7 @@ export function BentoGallery() {
           ref={gridRef}
           style={{ display: "grid", gridAutoFlow: "column", gridAutoColumns: "minmax(16rem,1fr)", gap: 16, padding: "0 24px 8px", width: "max-content", transition: isDragging ? "none" : "transform .1s ease" }}
         >
-          {behanceProjects.map((item) => (
+          {visibleProjects.map((item) => (
             <BehanceCard
               key={item.id}
               item={item}
@@ -279,6 +289,28 @@ export function BentoGallery() {
           ))}
         </div>
       </div>
+
+      {/* Ver Mais button — only shown on home page (not showAll) */}
+      {!showAll && behanceProjects.length > DEFAULT_VISIBLE && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 40 }}>
+          <button
+            className="bento-ver-mais"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>
+                <span>Ver menos</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>expand_less</span>
+              </>
+            ) : (
+              <>
+                <span>Ver mais</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>expand_more</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Modal */}
       {selectedItem && (
@@ -392,6 +424,29 @@ export function BentoGallery() {
           transition: background .2s, color .2s;
         }
         .bento-close-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+        .bento-ver-mais {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 13px 32px;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 100px;
+          color: rgba(255,255,255,.7);
+          font-size: 13px;
+          font-weight: 500;
+          letter-spacing: .06em;
+          cursor: pointer;
+          transition: border-color .25s, color .25s, background .25s, transform .2s;
+        }
+        .bento-ver-mais:hover {
+          border-color: rgba(255,255,255,.35);
+          color: #fff;
+          background: rgba(255,255,255,.05);
+          transform: translateY(-1px);
+        }
+        .bento-ver-mais:active { transform: scale(.97); }
       `}} />
     </section>
   );
