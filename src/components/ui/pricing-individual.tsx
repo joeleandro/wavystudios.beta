@@ -30,7 +30,7 @@ const services = [
     popular: true,
     icon: "mic",
     options: [
-      { label: "Diurna (12h–21h)", price: 25, unit: "/hora" },
+      { label: "Diurna (12h–21h)", price: 35, unit: "/hora" },
       { label: "Noturna (21h–05h)", price: 35, unit: "/hora" },
     ],
     includes: [
