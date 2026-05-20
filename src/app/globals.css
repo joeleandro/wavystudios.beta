@@ -2001,7 +2001,7 @@ body:has(.hw-hero) .main-nav { display: none !important; }
   .hw-tagline-block p { font-size: 12.5px; }
   .hw-service-name { font-size: 12px; }
   .hw-scroll-cue { padding: 14px 0 22px; }
-
+}
 
 /* ═══════════════════════════════════════════════════════════════
    ARTIST CAROUSEL — arrows + drag
