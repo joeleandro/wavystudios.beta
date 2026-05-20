@@ -20,11 +20,13 @@ export function Hero() {
         <Link href="/" className="hw-logo">Wavy Studios</Link>
         <div className="hw-nav-links">
           <Link href="/precos" className="hw-nav-link">Serviços</Link>
+          <Link href="/portfolio" className="hw-nav-link">Portfólio</Link>
+          <Link href="/cyclo" className="hw-nav-link">Cyclo</Link>
           <Link href="/estudios" className="hw-nav-link">Estúdios</Link>
           <Link href="/sobre" className="hw-nav-link">Sobre</Link>
         </div>
         <button className="hw-btn-contact" onClick={() => router.push("/login")}>
-          Entrar
+          Login
           <span className="hw-btn-arrow">→</span>
         </button>
       </nav>
