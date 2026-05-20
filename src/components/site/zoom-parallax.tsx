@@ -1,7 +1,6 @@
-'use client';
+"use client";
 
-import { useScroll, useTransform, motion } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from "react";
 
 interface Image {
   src: string;
@@ -9,45 +8,94 @@ interface Image {
 }
 
 interface ZoomParallaxProps {
-  /** Array of images to be displayed in the parallax effect max 7 images */
   images: Image[];
 }
 
+/**
+ * ZoomParallax — CSS-driven scroll zoom parallax (no framer-motion dependency).
+ * Each image scales from 1× to 4–9× as the section scrolls through the viewport.
+ */
 export function ZoomParallax({ images }: ZoomParallaxProps) {
-  const container = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: container,
-    offset: ['start start', 'end end'],
-  });
+  const container = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0); // 0 → 1
 
-  const scale4 = useTransform(scrollYProgress, [0, 1], [1, 4]);
-  const scale5 = useTransform(scrollYProgress, [0, 1], [1, 5]);
-  const scale6 = useTransform(scrollYProgress, [0, 1], [1, 6]);
-  const scale8 = useTransform(scrollYProgress, [0, 1], [1, 8]);
-  const scale9 = useTransform(scrollYProgress, [0, 1], [1, 9]);
+  useEffect(() => {
+    function onScroll() {
+      const el = container.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      const scrolled = -rect.top;
+      setProgress(Math.max(0, Math.min(1, scrolled / total)));
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  const scales = [scale4, scale5, scale6, scale5, scale6, scale8, scale9];
+  const maxScales = [4, 5, 6, 5, 6, 8, 9];
+  const positions = [
+    // index 0: centre (default)
+    undefined,
+    // index 1
+    { top: "-30vh", left: "5vw", height: "30vh", width: "35vw" },
+    // index 2
+    { top: "-10vh", left: "calc(50% - 25vw - 20vw)", height: "45vh", width: "20vw" },
+    // index 3
+    { top: "0", left: "calc(50% + 27.5vw)", height: "25vh", width: "25vw" },
+    // index 4
+    { top: "27.5vh", left: "5vw", height: "25vh", width: "20vw" },
+    // index 5
+    { top: "27.5vh", left: "calc(50% - 22.5vw - 15vw)", height: "25vh", width: "30vw" },
+    // index 6
+    { top: "22.5vh", left: "calc(50% + 25vw)", height: "15vh", width: "15vw" },
+  ];
 
   return (
-    <div ref={container} className="relative h-[300vh]">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {images.map(({ src, alt }, index) => {
-          const scale = scales[index % scales.length];
+    <div ref={container} style={{ position: "relative", height: "300vh" }}>
+      <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
+        {images.slice(0, 7).map(({ src, alt }, index) => {
+          const maxScale = maxScales[index % maxScales.length];
+          const scale = 1 + progress * (maxScale - 1);
+          const pos = positions[index];
 
           return (
-            <motion.div
+            <div
               key={index}
-              style={{ scale }}
-              className={`absolute top-0 flex h-full w-full items-center justify-center ${index === 1 ? '[&>div]:!-top-[30vh] [&>div]:!left-[5vw] [&>div]:!h-[30vh] [&>div]:!w-[35vw]' : ''} ${index === 2 ? '[&>div]:!-top-[10vh] [&>div]:!-left-[25vw] [&>div]:!h-[45vh] [&>div]:!w-[20vw]' : ''} ${index === 3 ? '[&>div]:!left-[27.5vw] [&>div]:!h-[25vh] [&>div]:!w-[25vw]' : ''} ${index === 4 ? '[&>div]:!top-[27.5vh] [&>div]:!left-[5vw] [&>div]:!h-[25vh] [&>div]:!w-[20vw]' : ''} ${index === 5 ? '[&>div]:!top-[27.5vh] [&>div]:!-left-[22.5vw] [&>div]:!h-[25vh] [&>div]:!w-[30vw]' : ''} ${index === 6 ? '[&>div]:!top-[22.5vh] [&>div]:!left-[25vw] [&>div]:!h-[15vh] [&>div]:!w-[15vw]' : ''} `}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transform: `scale(${scale})`,
+                transformOrigin: "center center",
+                willChange: "transform",
+              }}
             >
-              <div className="relative h-[25vh] w-[25vw]">
+              <div
+                style={
+                  pos
+                    ? {
+                        position: "absolute",
+                        top: pos.top,
+                        left: pos.left,
+                        height: pos.height,
+                        width: pos.width,
+                      }
+                    : { position: "relative", height: "25vh", width: "25vw" }
+                }
+              >
                 <img
-                  src={src || '/placeholder.svg'}
+                  src={src || "/placeholder.svg"}
                   alt={alt || `Parallax image ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  style={{ height: "100%", width: "100%", objectFit: "cover" }}
                 />
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
