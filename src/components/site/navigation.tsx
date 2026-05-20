@@ -101,7 +101,7 @@ export function Navigation() {
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuD69aH4gDqvS6GPs2xSrAsH6uz0MUTCYqNe9923wUo4mY5swSnJVLBhwJFUuStaN2T_cN38aJLdPTrZk1_T0WjJhTQukQ3HpPrVj3G-OORLvLj4s-BJ0MnDFczT0XWDrJ9XV_HfRyB5mtCX493f9HOdOzasnAOtMQn6ZA54RKD9-WT6YTVWvKbv7sIS0Ws6QNdPuMBt6vS0zoh7ONM9u7bCFWpA-r3d4Q24kUhMWTLVcLfgzhm5iypCN_23yY9L4NP9DtnB0OJfJLa6"
                 alt="Wavy Studios"
-                style={{ width: 44, height: 44, objectFit: "contain", filter: "brightness(2)" }}
+                style={{ width: 38, height: 38, objectFit: "contain", filter: "brightness(2)" }}
               />
               <span className="mm-logo-text">Wavy Studios</span>
             </Link>
@@ -122,10 +122,9 @@ export function Navigation() {
                 href={link.href}
                 className={`mm-link ${pathname === link.href ? "mm-link-active" : ""}`}
                 onClick={close}
-                style={{ animationDelay: `${0.06 + i * 0.05}s` }}
+                style={{ animationDelay: `${0.08 + i * 0.04}s` }}
               >
-                {link.label}
-                <span className="mm-link-arrow">↗</span>
+                <span className="mm-link-text">{link.label}</span>
               </Link>
             ))}
           </nav>
@@ -136,17 +135,17 @@ export function Navigation() {
           {/* ── Contact info ── */}
           <div className="mm-contact">
             <p className="mm-contact-label">Contacto</p>
-            <a href="tel:+351939910528" className="mm-contact-item">
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>phone</span>
-              +351 939 910 528
-            </a>
             <a href="mailto:wavystudiosinfo@gmail.com" className="mm-contact-item">
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>mail</span>
-              wavystudiosinfo@gmail.com
+              <span className="mm-contact-row-label">Email</span>
+              <span className="mm-contact-row-value">wavystudiosinfo@gmail.com</span>
+            </a>
+            <a href="tel:+351939910528" className="mm-contact-item">
+              <span className="mm-contact-row-label">Telefone</span>
+              <span className="mm-contact-row-value">+351 939 910 528</span>
             </a>
             <div className="mm-contact-item" style={{ cursor: "default" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>location_on</span>
-              Lisboa · Porto
+              <span className="mm-contact-row-label">Estúdios</span>
+              <span className="mm-contact-row-value">Lisboa · Porto</span>
             </div>
           </div>
 
@@ -154,7 +153,7 @@ export function Navigation() {
           <div className="mm-footer">
             <Link href="/login" className="mm-login-btn" onClick={close}>
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>login</span>
-              Entrar na conta
+              Entrar
             </Link>
           </div>
         </div>
