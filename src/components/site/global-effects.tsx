@@ -19,10 +19,20 @@ export function GlobalEffects() {
     <>
       <div className="film-grain" />
       <div className="cursor-glow" id="cursorGlow" />
+      {/* Prism-based wireframe background — visual rhyming with logo */}
       <svg className="wireframe-bg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-        <path d="M500,0 L1000,500 L500,1000 L0,500 Z" fill="none" stroke="#8b0000" strokeWidth="0.6" />
-        <circle cx="500" cy="500" r="450" fill="none" stroke="#8b0000" strokeDasharray="20 40" strokeWidth="0.3" />
-        <path d="M200,200 L800,200 L800,800 L200,800 Z" fill="none" stroke="#8b0000" strokeWidth="0.4" transform="rotate(45 500 500)" />
+        {/* Central prism trio (echoes logo) */}
+        <polygon points="400,700 500,300 600,700" fill="none" stroke="#8b0000" strokeWidth="0.4" />
+        <polygon points="320,700 450,250 580,700" fill="none" stroke="#8b0000" strokeWidth="0.3" opacity="0.6" />
+        <polygon points="480,700 550,350 620,700" fill="none" stroke="#8b0000" strokeWidth="0.3" opacity="0.6" />
+        {/* Outer geometric frame */}
+        <path d="M500,50 L950,500 L500,950 L50,500 Z" fill="none" stroke="#8b0000" strokeWidth="0.4" />
+        {/* Concentric prism rings */}
+        <polygon points="350,750 500,200 650,750" fill="none" stroke="#8b0000" strokeWidth="0.2" strokeDasharray="12 24" opacity="0.4" />
+        <polygon points="250,800 500,100 750,800" fill="none" stroke="#8b0000" strokeWidth="0.2" strokeDasharray="8 32" opacity="0.25" />
+        {/* Sound wave arcs */}
+        <path d="M 300 600 Q 500 450 700 600" fill="none" stroke="#8b0000" strokeWidth="0.3" opacity="0.35" />
+        <path d="M 250 650 Q 500 400 750 650" fill="none" stroke="#8b0000" strokeWidth="0.2" opacity="0.25" />
       </svg>
     </>
   );
