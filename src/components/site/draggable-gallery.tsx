@@ -133,7 +133,7 @@ export const GridItem = ({
   const variant = useContext(GridVariantContext);
 
   const gridItemStyles = cva(
-    "overflow-hidden hover:cursor-pointer w-full h-full will-change-transform",
+    "overflow-hidden hover:cursor-pointer w-[280px] h-[280px] md:w-[320px] md:h-[320px] will-change-transform",
     {
       variants: {
         variant: {
@@ -171,12 +171,12 @@ export const GridBody = memo(
   }) => {
     const variant = useContext(GridVariantContext);
 
-    const gridBodyStyles = cva("grid grid-cols-[repeat(6,1fr)] h-fit w-fit", {
+    const gridBodyStyles = cva("grid grid-cols-[repeat(6,280px)] md:grid-cols-[repeat(6,320px)] h-fit w-fit", {
       variants: {
         variant: {
-          default: "gap-14 p-7 md:gap-28 md:p-14",
-          masonry: "gap-x-14 px-7 md:gap-x-28 md:px-14",
-          polaroid: "gap-x-14 px-7 md:gap-x-28 md:px-14",
+          default: "gap-4 p-4 md:gap-6 md:p-6",
+          masonry: "gap-x-4 px-4 md:gap-x-6 md:px-6",
+          polaroid: "gap-x-4 px-4 md:gap-x-6 md:px-6",
         },
       },
       defaultVariants: {
