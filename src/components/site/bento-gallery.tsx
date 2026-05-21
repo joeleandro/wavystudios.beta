@@ -33,7 +33,7 @@ function BehanceCard({ item, onOpen, mode = "drag" }: {
   onOpen: (r: ImageItem) => void;
   mode?: "drag" | "grid";
 }) {
-  const [imgUrl, setImgUrl] = useState<string>(FALLBACK(item.id));
+  const imgUrl = item.image || FALLBACK(item.id);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [visible, setVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -48,15 +48,6 @@ function BehanceCard({ item, onOpen, mode = "drag" }: {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/behance-preview?url=${encodeURIComponent(item.url)}`)
-      .then(r => r.json())
-      .then(d => { if (!cancelled && d.image) setImgUrl(d.image); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [item.url]);
 
   const resolved: ImageItem = { id: item.id, title: item.title, desc: item.desc, url: imgUrl, behanceUrl: item.url, span: item.span };
 
@@ -135,7 +126,7 @@ function ImageModal({ item, onClose }: { item: ImageItem; onClose: () => void })
 
 // ─── HOME: horizontal drag row ────────────────────────────────────────────────
 const DEFAULT_VISIBLE = 5;
-const MAX_VISIBLE = 17;
+const MAX_VISIBLE = 24;
 
 function DragGallery({ showAll }: { showAll: boolean }) {
   const [selectedItem, setSelectedItem] = useState<ImageItem | null>(null);
@@ -165,18 +156,17 @@ function DragGallery({ showAll }: { showAll: boolean }) {
 
   // Recalculate constraint after expand/collapse so new items are reachable
   useEffect(() => {
-    // Small delay to let DOM update with new items
     const timer = setTimeout(calcConstraint, 50);
     return () => clearTimeout(timer);
   }, [expanded]);
 
-  // Reset position when expanding
+  // Reset position when toggling
   function handleToggle() {
+    setExpanded(v => !v);
     if (gridRef.current) {
       gridRef.current.style.transform = "translateX(0)";
       (gridRef.current as any)._baseX = 0;
     }
-    setExpanded(v => !v);
   }
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -208,9 +198,9 @@ function DragGallery({ showAll }: { showAll: boolean }) {
 
   return (
     <>
-      <div ref={containerRef} style={{ width: "100%", cursor: isDragging ? "grabbing" : "grab", userSelect: "none", overflow: "hidden" }}
+      <div ref={containerRef} className="bento-drag-container" style={{ width: "100%", cursor: isDragging ? "grabbing" : "grab", userSelect: "none", overflow: "hidden" }}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-        <div ref={gridRef}
+        <div ref={gridRef} className="bento-drag-row"
           style={{ display: "flex", gap: 16, padding: "0 24px 8px", transition: isDragging ? "none" : "transform .15s ease" }}>
           {visibleProjects.map((item) => (
             <div key={item.id} style={{ flexShrink: 0, width: item.span === "card-wide" ? "32rem" : item.span === "card-tall" ? "16rem" : item.span === "card-large" ? "24rem" : "20rem", minWidth: item.span === "card-wide" ? "32rem" : "16rem" }}>
@@ -243,7 +233,7 @@ function GridGallery() {
 
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "0 24px" }}>
+      <div className="bento-grid-wrap" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "0 24px" }}>
         {behanceProjects.map((item) => (
           <BehanceCard key={item.id} item={item} onOpen={setSelectedItem} mode="grid" />
         ))}
@@ -360,6 +350,19 @@ export function BentoGallery({ showAll = false }: { showAll?: boolean }) {
         }
         @media (max-width: 540px) {
           .bento-grid-wrap { grid-template-columns: 1fr !important; }
+          .bento-grid-wrap .bento-card { grid-column: span 1 !important; }
+          .bento-drag-row {
+            flex-direction: column !important;
+            padding: 0 16px 8px !important;
+          }
+          .bento-drag-row > div {
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+          .bento-drag-container {
+            cursor: default !important;
+            overflow: visible !important;
+          }
         }
       `}} />
     </section>
