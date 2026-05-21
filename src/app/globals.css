@@ -2111,12 +2111,25 @@ img { display: block; max-width: 100%; }
   color: rgba(255, 235, 230, 0.66);
 }
 
-/* ── Services 2×2 grid ───────────────────────────────────── */
+/* ── Hero Logo ─────────────────────────────────────────────── */
+.hw-hero-logo {
+  width: clamp(280px, 45vw, 480px);
+  height: auto;
+  object-fit: contain;
+  animation: hw-fade-up 0.7s 0.5s ease both;
+}
+.hw-nav-logo-img {
+  width: 42px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* ── Services 4-col row (desktop) ─────────────────────────── */
 .hw-services {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  max-width: 520px;
+  max-width: 680px;
   animation: hw-fade-up 0.7s 0.82s ease both;
 }
 
@@ -2195,12 +2208,13 @@ img { display: block; max-width: 100%; }
   .hw-nav-links { display: none; }
   .hw-nav .nav-pill { display: none; }
   .hw-nav .nav-login-pill { display: none; }
-  .hw-content { padding: 0 24px 28px; }
+  .hw-content { padding: 0 24px 28px; align-items: center; text-align: center; }
   .hw-headline { font-size: clamp(52px, 16vw, 76px); letter-spacing: -2px; }
+  .hw-hero-logo { width: clamp(200px, 60vw, 320px); }
   .hw-img-wrap { width: 80%; right: -16px; height: 55%; }
   .hw-tagline-block { padding: 16px 18px; }
   .hw-tagline-block strong { font-size: 15px; }
-  .hw-services { gap: 8px; }
+  .hw-services { grid-template-columns: 1fr 1fr; gap: 8px; max-width: 100%; }
   .hw-service-item { padding: 12px 14px; }
 }
 
@@ -3013,4 +3027,239 @@ img, video, canvas, svg {
 }
 .bento-ver-mais:active {
   transform: scale(.97);
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS & VISUAL RHYMING SYSTEM
+   Based on the prism/triangle motif from Wavy Studios logo
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Scroll-triggered animations ─────────────────────────── */
+.anim-fade-in {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: anim-reveal 0.7s ease forwards;
+}
+.anim-fade-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: anim-slide-right 0.7s ease forwards;
+}
+.anim-fade-right {
+  opacity: 0;
+  transform: translateX(30px);
+  animation: anim-slide-left 0.7s ease forwards;
+}
+.anim-scale-in {
+  opacity: 0;
+  transform: scale(0.92);
+  animation: anim-scale 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes anim-reveal {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes anim-slide-right {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes anim-slide-left {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes anim-scale {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Stagger delays for child elements */
+.anim-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.anim-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.anim-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.anim-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.anim-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.anim-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* ── Section entry transitions ───────────────────────────── */
+.section-eyebrow,
+.section-title {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: anim-reveal 0.7s 0.1s ease forwards;
+}
+.section-title {
+  animation-delay: 0.2s;
+}
+
+/* ── Visual Rhyming — Prism motif ────────────────────────── */
+
+/* Decorative prism accent for section dividers */
+.prism-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 40px 0;
+  opacity: 0.25;
+}
+.prism-divider::before,
+.prism-divider::after {
+  content: '';
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid var(--primary-c);
+}
+.prism-divider::after {
+  opacity: 0.6;
+  transform: scale(0.7);
+}
+
+/* Prism overlay for buttons on hover */
+.nav-login-pill::before,
+.cta-btn::before,
+.bento-ver-mais::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(139, 0, 0, 0.08) 40%,
+    rgba(192, 57, 43, 0.12) 50%,
+    rgba(139, 0, 0, 0.08) 60%,
+    transparent 100%
+  );
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.nav-login-pill:hover::before,
+.cta-btn:hover::before,
+.bento-ver-mais:hover::before {
+  left: 100%;
+}
+.nav-login-pill,
+.bento-ver-mais {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Prism-shaped clip for card accents */
+.glass::after {
+  content: '';
+  position: absolute;
+  top: -1px; right: -1px;
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, rgba(139,0,0,0.3) 0%, transparent 60%);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.glass:hover::after {
+  opacity: 1;
+}
+.glass {
+  position: relative;
+}
+
+/* Triangular accent on footer socials */
+.footer-social::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--primary-c);
+  opacity: 0;
+  transition: opacity 0.3s, bottom 0.3s;
+}
+.footer-social:hover::after {
+  opacity: 1;
+  bottom: -6px;
+}
+.footer-social {
+  position: relative;
+}
+
+/* ── Smooth page transitions ─────────────────────────────── */
+main {
+  animation: page-enter 0.5s ease;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Prism-shaped section masks ──────────────────────────── */
+.pricing-section::before,
+.team-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.pricing-section,
+.team-section {
+  position: relative;
+}
+
+/* ── Geometric float animation (background decoration) ──── */
+@keyframes prism-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(2deg); }
+  66% { transform: translateY(4px) rotate(-1deg); }
+}
+
+/* Subtle hover lift for interactive cards */
+.hw-service-item,
+.bento-card,
+.pricing-card,
+.footer-social,
+.nav-pill-link {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s ease,
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+.hw-service-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139, 0, 0, 0.12);
+}
+
+/* ── Scroll indicator pulse ──────────────────────────────── */
+.hw-scroll-cue span {
+  animation: pulse-ring 2s 1.5s infinite;
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.25); }
+  50% { box-shadow: 0 0 0 8px rgba(192, 57, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+}
+
+/* ── Nav pill link underline sweep ───────────────────────── */
+.nav-pill-link::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 50%;
+  width: 0; height: 1.5px;
+  background: var(--primary-c);
+  transition: width 0.3s ease, left 0.3s ease;
+}
+.nav-pill-link:hover::after {
+  width: 60%;
+  left: 20%;
+}
+.nav-pill-link {
+  position: relative;
 }

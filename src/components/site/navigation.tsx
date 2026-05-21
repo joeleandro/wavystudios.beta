@@ -44,11 +44,12 @@ export function Navigation() {
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center" }}>
           <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD69aH4gDqvS6GPs2xSrAsH6uz0MUTCYqNe9923wUo4mY5swSnJVLBhwJFUuStaN2T_cN38aJLdPTrZk1_T0WjJhTQukQ3HpPrVj3G-OORLvLj4s-BJ0MnDFczT0XWDrJ9XV_HfRyB5mtCX493f9HOdOzasnAOtMQn6ZA54RKD9-WT6YTVWvKbv7sIS0Ws6QNdPuMBt6vS0zoh7ONM9u7bCFWpA-r3d4Q24kUhMWTLVcLfgzhm5iypCN_23yY9L4NP9DtnB0OJfJLa6"
+            src="/logo-wavy.svg"
             alt="Wavy Studios"
             className="nav-logo-img"
-            style={{ width: 54, height: 54, objectFit: "contain", filter: "brightness(2)" }}
-          />        </Link>
+            style={{ width: 44, height: 32, objectFit: "contain" }}
+          />
+        </Link>
 
         {/* Desktop nav — pill container */}
         <div className="nav-pill nav-desktop-only">
@@ -99,9 +100,9 @@ export function Navigation() {
           <div className="mm-header">
             <Link href="/" className="mm-logo" onClick={close}>
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD69aH4gDqvS6GPs2xSrAsH6uz0MUTCYqNe9923wUo4mY5swSnJVLBhwJFUuStaN2T_cN38aJLdPTrZk1_T0WjJhTQukQ3HpPrVj3G-OORLvLj4s-BJ0MnDFczT0XWDrJ9XV_HfRyB5mtCX493f9HOdOzasnAOtMQn6ZA54RKD9-WT6YTVWvKbv7sIS0Ws6QNdPuMBt6vS0zoh7ONM9u7bCFWpA-r3d4Q24kUhMWTLVcLfgzhm5iypCN_23yY9L4NP9DtnB0OJfJLa6"
+                src="/logo-wavy.svg"
                 alt="Wavy Studios"
-                style={{ width: 48, height: 48, objectFit: "contain", filter: "brightness(2)" }}
+                style={{ width: 40, height: 28, objectFit: "contain" }}
               />
               <span className="mm-logo-text">Wavy Studios</span>
             </Link>
