@@ -35,6 +35,7 @@ const services = [
     ],
     includes: [
       "Técnico de som incluído",
+      "Gravação com live plugins",
       "Equipamento profissional",
       "Sala isolada",
       "Monitorização em tempo real",
