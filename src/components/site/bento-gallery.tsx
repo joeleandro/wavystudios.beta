@@ -163,6 +163,13 @@ function DragGallery({ showAll }: { showAll: boolean }) {
     return () => window.removeEventListener("resize", calcConstraint);
   });
 
+  // Recalculate constraint after expand/collapse so new items are reachable
+  useEffect(() => {
+    // Small delay to let DOM update with new items
+    const timer = setTimeout(calcConstraint, 50);
+    return () => clearTimeout(timer);
+  }, [expanded]);
+
   // Reset position when expanding
   function handleToggle() {
     if (gridRef.current) {
