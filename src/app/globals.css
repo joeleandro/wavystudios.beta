@@ -2982,3 +2982,35 @@ img, video, canvas, svg {
     white-space: nowrap;
   }
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   BENTO GALLERY — Ver mais/menos button
+═══════════════════════════════════════════════════════════════ */
+.bento-ver-mais {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 24px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.03);
+  color: var(--text2);
+  font-family: 'Sora', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: all .25s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.bento-ver-mais:hover {
+  border-color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+}
+.bento-ver-mais:active {
+  transform: scale(.97);
+}
