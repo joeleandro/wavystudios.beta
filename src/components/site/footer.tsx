@@ -19,7 +19,7 @@ function IconSpotify() {
 function IconAppleMusic() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.986c-.152.01-.303.017-.455.026A7.958 7.958 0 004.05.878C2.83 1.324 1.987 2.145 1.5 3.354a6.495 6.495 0 00-.35 1.662c-.034.282-.043.566-.048.85-.002.06-.01.12-.01.18V18c.003.035.006.07.008.104a9.4 9.4 0 00.464 2.58 5.04 5.04 0 002.056 2.476 7.058 7.058 0 002.54.86 15.526 15.526 0 001.978.17h.135l.05.002h12.026c.14-.006.278-.013.417-.023a6.994 6.994 0 001.944-.412 5.105 5.105 0 002.716-2.616 7.43 7.43 0 00.47-1.747c.05-.327.074-.658.087-.99.003-.06.006-.12.007-.18V6.218c0-.032-.003-.063-.005-.094zm-12.62 11.898c-.748 0-1.44-.17-2.03-.478l-.001-.001a4.078 4.078 0 01-1.598-1.616 4.067 4.067 0 01-.47-1.918c0-.754.198-1.443.527-2.03a4.065 4.065 0 011.6-1.593c.587-.307 1.28-.476 2.03-.476h.003c.746 0 1.44.17 2.027.476l.002.001a4.066 4.066 0 011.6 1.593c.33.587.527 1.276.527 2.03a4.067 4.067 0 01-.527 2.03l-.001.001a4.066 4.066 0 01-1.6 1.592 4.088 4.088 0 01-2.089.389zm5.34-8.67V5.2l-5.34 1.426v6.348c-.426-.248-.912-.393-1.43-.393-.727 0-1.374.253-1.848.668-.475.415-.74.99-.74 1.598 0 .609.265 1.183.74 1.598.474.415 1.121.668 1.848.668.727 0 1.374-.253 1.848-.668.475-.415.74-.99.74-1.598V8.768l3.183-.851v3.435a3.074 3.074 0 01-1.43-.392v2.35c-.03-.017-.062-.032-.093-.048A4.078 4.078 0 0116.715 12V9.352z"/>
+      <path d="M15.5 2.5L8.5 4.2v12.3c0 .5-.2 1-.5 1.4-.4.5-1 .8-1.7.9-.8.1-1.6-.1-2.2-.5-.6-.5-1-1.1-1-1.8 0-.7.3-1.3.9-1.8.6-.4 1.3-.7 2.1-.6.5 0 .9.1 1.4.3V5.5l5.5-1.3v9.3c0 .5-.2 1-.5 1.4-.4.5-1 .8-1.7.9-.8.1-1.6-.1-2.2-.5-.6-.5-1-1.1-1-1.8 0-.7.3-1.3.9-1.8.6-.4 1.3-.7 2.1-.6.5 0 .9.1 1.4.3V2.5z"/>
     </svg>
   );
 }
@@ -62,10 +62,10 @@ export function SiteFooter() {
           <div style={{ fontSize: 14, color: "var(--text2)", marginTop: 6 }}>+351 939 910 528</div>
         </div>
         <div className="footer-block-socials" style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-          <a href="https://www.instagram.com/wavystudios_/" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Instagram"><IconInstagram /></a>
-          <a href="https://open.spotify.com" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Spotify"><IconSpotify /></a>
-          <a href="https://music.apple.com" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Apple Music"><IconAppleMusic /></a>
-          <a href="https://www.youtube.com/@wavystudios" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="YouTube"><IconYouTube /></a>
+          <a href="https://www.instagram.com/wavystudioss/" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Instagram"><IconInstagram /></a>
+          <a href="https://open.spotify.com/intl-pt/artist/6DGmebMhwunFzbWodIcMsW" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Spotify"><IconSpotify /></a>
+          <a href="https://music.apple.com/pt/artist/wavy/1552201533?l=en-GB" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="Apple Music"><IconAppleMusic /></a>
+          <a href="https://www.youtube.com/@WavyStudiosWeOn/featured" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="YouTube"><IconYouTube /></a>
           <a href="https://wa.me/351939910528" target="_blank" rel="noopener noreferrer" className="footer-social" aria-label="WhatsApp"><IconWhatsApp /></a>
         </div>
       </div>
