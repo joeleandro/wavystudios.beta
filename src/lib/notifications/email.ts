@@ -17,13 +17,13 @@ export async function emailNovaSessaoAdmin(sessao: any, cliente: any) {
     return
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app/'
   const produtorInfo = sessao.produtor ? `<p><strong>Produtor:</strong> ${sessao.produtor}</p>` : ''
 
   try {
     const { data, error } = await resend.emails.send({
       from: 'Wavy Studios <onboarding@resend.dev>',
-      to: process.env.ADMIN_EMAIL || 'admin@wavystudios.pt',
+      to: process.env.ADMIN_EMAIL || 'joe7busssiness@gmail.com',
       subject: `Nova sessão: ${cliente.nome} — ${sessao.data}`,
       html: `
         <div style="font-family:system-ui;max-width:500px;margin:0 auto;padding:24px;background:#111;color:#e5e2e1;border-radius:12px">
