@@ -44,10 +44,10 @@ export function Navigation() {
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center" }}>
           <img
-            src="/logo-wavy.svg"
+            src="/white3_peq.webp"
             alt="Wavy Studios"
             className="nav-logo-img"
-            style={{ width: 44, height: 32, objectFit: "contain" }}
+            style={{ width: 32, height: 48, objectFit: "contain" }}
           />
         </Link>
 
@@ -100,9 +100,9 @@ export function Navigation() {
           <div className="mm-header">
             <Link href="/" className="mm-logo" onClick={close}>
               <img
-                src="/logo-wavy.svg"
+                src="/white3_peq.webp"
                 alt="Wavy Studios"
-                style={{ width: 40, height: 28, objectFit: "contain" }}
+                style={{ width: 28, height: 42, objectFit: "contain" }}
               />
               <span className="mm-logo-text">Wavy Studios</span>
             </Link>

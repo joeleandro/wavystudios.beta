@@ -26,7 +26,7 @@ export function Hero() {
       {/* ── inline nav (hidden on mobile via CSS + class) ── */}
       <nav className="hw-nav hw-nav-desktop-only">
         <Link href="/" className="hw-logo">
-          <img src="/logo-wavy.svg" alt="Wavy Studios" className="hw-nav-logo-img" />
+          <img src="/white3_peq.webp" alt="Wavy Studios" className="hw-nav-logo-img" />
         </Link>
 
         {/* Pill container — same style as main-nav */}
@@ -112,7 +112,7 @@ export function Hero() {
 
         <h1 className="hw-headline">
           <img
-            src="/logo-wavy.svg"
+            src="/white3_peq.webp"
             alt="Wavy Studios"
             className="hw-hero-logo"
           />
