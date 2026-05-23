@@ -108,8 +108,6 @@ export function Hero() {
       {/* ── hero copy ── */}
       <div className="hw-content">
 
-        <p className="hw-eyebrow">O teu som começa aqui</p>
-
         <h1 className="hw-headline">
           <img
             src="/white3_peq.webp"

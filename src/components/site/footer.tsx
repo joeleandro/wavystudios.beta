@@ -241,15 +241,34 @@ export function SiteFooter() {
             border-radius: 24px 24px 0 0;
           }
           .wavy-footer-links-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
           }
           .wavy-footer-brand {
             align-items: center;
             text-align: center;
           }
+          .wavy-footer-copy,
           .wavy-footer-contact {
             text-align: center;
+          }
+          .wavy-footer-section-title {
+            font-size: 10px;
+          }
+          .wavy-footer-link {
+            font-size: 12px;
+          }
+          .wavy-footer-section-list {
+            gap: 8px;
+          }
+        }
+        @media (max-width: 380px) {
+          .wavy-footer {
+            padding: 32px 16px;
+          }
+          .wavy-footer-links-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
           }
         }
       `}} />
