@@ -2113,7 +2113,7 @@ img { display: block; max-width: 100%; }
 
 /* ── Hero Logo ─────────────────────────────────────────────── */
 .hw-hero-logo {
-  width: clamp(280px, 45vw, 480px);
+  width: clamp(180px, 30vw, 320px);
   height: auto;
   object-fit: contain;
   animation: hw-fade-up 0.7s 0.5s ease both;
@@ -2210,7 +2210,7 @@ img { display: block; max-width: 100%; }
   .hw-nav .nav-login-pill { display: none; }
   .hw-content { padding: 0 24px 28px; align-items: center; text-align: center; }
   .hw-headline { font-size: clamp(52px, 16vw, 76px); letter-spacing: -2px; }
-  .hw-hero-logo { width: clamp(200px, 60vw, 320px); }
+  .hw-hero-logo { width: clamp(140px, 40vw, 220px); }
   .hw-img-wrap { width: 80%; right: -16px; height: 55%; }
   .hw-tagline-block { padding: 16px 18px; }
   .hw-tagline-block strong { font-size: 15px; }
