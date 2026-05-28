@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatDateShort } from "@/lib/utils/formatDate";
 
 type Sessao = {
   id: string;
@@ -84,7 +85,7 @@ export default function AdminSessoesPage() {
             {s.profiles?.nome || "Cliente"}
           </div>
           <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
-            {s.data} • {s.hora_inicio}–{s.hora_fim}
+            {formatDateShort(s.data)} • {s.hora_inicio}–{s.hora_fim}
           </div>
           <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2, textTransform: "capitalize" }}>
             {s.tipo?.replace("_", "/")}
@@ -266,7 +267,7 @@ export default function AdminSessoesPage() {
               {filtered.map((s) => (
                 <tr key={s.id}>
                   <td style={{ color: "var(--text)", fontWeight: 500 }}>{s.profiles?.nome || "—"}</td>
-                  <td>{s.data}</td>
+                  <td>{formatDateShort(s.data)}</td>
                   <td>{s.hora_inicio}–{s.hora_fim}</td>
                   <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
                   <td>{s.duracao_minutos}min</td>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { formatDateShort, formatDateParts } from "@/lib/utils/formatDate";
 
 export default function ClienteDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -147,8 +148,14 @@ export default function ClienteDashboard() {
           <div className="db-card-label"><div className="dot" />Próxima</div>
           {proximaSessao ? (
             <>
-              <div className="db-stat-val bebas" style={{ fontSize: 24 }}>{proximaSessao.data}</div>
-              <div className="db-stat-desc">{proximaSessao.hora_inicio} – {proximaSessao.hora_fim}</div>
+              {(() => { const parts = formatDateParts(proximaSessao.data); return (
+                <div>
+                  <div style={{ fontSize: 11, opacity: 0.5, letterSpacing: 2, textTransform: "uppercase" }}>{parts.weekday}</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", lineHeight: 1.1 }}>{parts.dayMonth}</div>
+                  <div style={{ fontSize: 12, opacity: 0.4 }}>{parts.year}</div>
+                </div>
+              ); })()}
+              <div className="db-stat-desc" style={{ marginTop: 6 }}>{proximaSessao.hora_inicio} – {proximaSessao.hora_fim}</div>
               <span className={`status-pill ${proximaSessao.estado === "confirmada" ? "sp-ok" : "sp-pend"}`} style={{ marginTop: 8 }}>{proximaSessao.estado}</span>
             </>
           ) : <div className="db-stat-desc">Nenhuma</div>}
@@ -171,7 +178,7 @@ export default function ClienteDashboard() {
               <tbody>
                 {sessoes.slice(0, 6).map(s => (
                   <tr key={s.id}>
-                    <td>{s.data}</td>
+                    <td>{formatDateShort(s.data)}</td>
                     <td>{s.hora_inicio}</td>
                     <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
                     <td><span className={`status-pill ${s.estado === "confirmada" ? "sp-ok" : s.estado === "pendente" ? "sp-pend" : s.estado === "cancelada" || s.estado === "recusada" ? "sp-cancel" : "sp-done"}`}>{s.estado}</span></td>
