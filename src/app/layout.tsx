@@ -3,8 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Wavy Studios",
-  description: "Estúdio de Captação Vocal & Produção Musical",
-  icons: { icon: "/favicon.ico" },
+  description: "Estúdio de gravação profissional em Lisboa e Porto.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+    shortcut: "/icon.png",
+  },
 };
 
 export default function RootLayout({
