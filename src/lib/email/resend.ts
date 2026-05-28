@@ -14,7 +14,7 @@ const FROM = process.env.NODE_ENV === 'production'
   ? 'Wavy Studios <noreply@wavystudios.pt>'
   : 'Wavy Studios <onboarding@resend.dev>'
 
-const ADMIN = process.env.ADMIN_EMAIL || 'wavystudiosinfo@gmail.com'
+const ADMIN = process.env.ADMIN_EMAIL || 'joe7bussiness@gmail.com'
 const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app'
 
 // ─────────────────────────────────────
