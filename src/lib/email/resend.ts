@@ -10,9 +10,7 @@ function getResend(): Resend | null {
   return resendInstance
 }
 
-const FROM = process.env.NODE_ENV === 'production'
-  ? 'Wavy Studios <noreply@wavystudios.pt>'
-  : 'Wavy Studios <onboarding@resend.dev>'
+const FROM = 'Wavy Studios <onboarding@resend.dev>'
 
 const ADMIN = process.env.ADMIN_EMAIL || 'vlaudiosebastiao@gmail.com'
 const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app'
