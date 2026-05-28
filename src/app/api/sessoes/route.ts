@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { verificarConflito, calcularHoraFim, obterSlotsDisponiveis } from '@/lib/validations/sessoes'
 import { verificarHorasSemana } from '@/lib/validations/horas'
-import { emailNovaSessaoAdmin } from '@/lib/notifications/email'
-import { wppNovaSessaoAdmin } from '@/lib/notifications/whatsapp'
+import { emailNovaSessionAdmin } from '@/lib/email/resend'
 
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServer()
@@ -132,9 +131,11 @@ export async function POST(req: NextRequest) {
     mensagem: `Nova sessão${produtorInfo} de ${(targetProfile as any).nome}: ${tipo} em ${dataStr} às ${hora_inicio}`,
   })
 
-  // Send email + WPP to admin (async, don't block)
-  emailNovaSessaoAdmin(sessao, targetProfile).catch((err) => console.error('[EMAIL] Error:', err))
-  wppNovaSessaoAdmin(sessao, targetProfile).catch((err) => console.error('[WPP] Error:', err))
+  // Send email to admin (async, don't block)
+  emailNovaSessionAdmin({
+    sessao,
+    cliente: { nome: (targetProfile as any).nome, email: (targetProfile as any).email || user.email || '', telefone: (targetProfile as any).telefone },
+  }).catch((err) => console.error('[EMAIL] Error:', err))
 
   return NextResponse.json({ sessao, message: 'Sessão marcada com sucesso!' })
 }

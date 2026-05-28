@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
-import { emailSessaoConfirmada, emailSessaoRecusada } from '@/lib/notifications/email'
+import { emailSessaoConfirmada, emailSessaoRecusada } from '@/lib/email/resend'
 
-// Confirm/refuse session via email link (token-less for now, uses sessao_id directly)
+// Confirm/refuse session via email link (uses sessao_id directly)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const sessaoId = searchParams.get('sessao_id')
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createSupabaseAdmin()
 
-  // Get session
+  // Get session with client profile
   const { data: sessao } = await supabase
     .from('sessoes')
     .select('*, profiles(nome, id)')
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   // Update session
   await supabase.from('sessoes').update({ estado: novoEstado, atualizado_em: new Date().toISOString() }).eq('id', sessaoId)
 
-  // Notify client
+  // Notify client via dashboard
   await supabase.from('notificacoes').insert({
     sessao_id: sessaoId,
     destinatario: sessao.cliente_id,
@@ -42,15 +42,30 @@ export async function GET(req: NextRequest) {
 
   // Email client
   const { data: authUser } = await supabase.auth.admin.getUserById(sessao.cliente_id)
-  if (authUser?.user?.email) {
+  const clienteEmail = authUser?.user?.email
+  const clienteNome = sessao.profiles?.nome || authUser?.user?.user_metadata?.nome || 'Artista'
+
+  if (clienteEmail) {
     if (novoEstado === 'confirmada') {
-      emailSessaoConfirmada(authUser.user.email, sessao).catch(console.error)
+      emailSessaoConfirmada({
+        sessao: {
+          data: sessao.data,
+          hora_inicio: sessao.hora_inicio,
+          hora_fim: sessao.hora_fim,
+          tipo: sessao.tipo,
+          produtor: sessao.produtor,
+        },
+        cliente: { nome: clienteNome, email: clienteEmail },
+      }).catch(console.error)
     } else {
-      emailSessaoRecusada(authUser.user.email, sessao).catch(console.error)
+      emailSessaoRecusada({
+        sessao: { data: sessao.data, hora_inicio: sessao.hora_inicio },
+        cliente: { nome: clienteNome, email: clienteEmail },
+      }).catch(console.error)
     }
   }
 
   // Redirect to admin dashboard
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app'
   return NextResponse.redirect(`${baseUrl}/admin?sessao=${novoEstado}`)
 }
