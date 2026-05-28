@@ -283,18 +283,30 @@ export function ListenSection() {
         }
         @media (max-width: 768px) {
           .listen-section { padding: 48px 16px; }
-          .listen-card { padding: 20px; border-radius: 18px; }
-          .listen-title { font-size: 32px; }
-          .listen-now-playing { padding: 18px !important; }
+          .listen-card { padding: 16px; border-radius: 18px; }
+          .listen-title { font-size: 28px; }
+          .listen-now-playing { padding: 16px !important; }
           .listen-controls-group { gap: 4px; }
-          .listen-icon-btn { width: 34px; height: 34px; }
-          .listen-play-btn { width: 42px; height: 42px; }
-          .listen-playlist { max-height: 240px; }
+          .listen-icon-btn { width: 32px; height: 32px; }
+          .listen-play-btn { width: 40px; height: 40px; }
+          .listen-playlist { max-height: 200px; }
+          .listen-np-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .listen-np-title { font-size: 18px; }
+          .listen-np-artist { font-size: 11px; }
+          .listen-embed iframe { height: 80px !important; }
+          .listen-highlight { padding: 14px !important; }
+          .listen-cta { font-size: 11px; padding: 11px 20px; }
+          .listen-track { padding: 10px 12px; }
+          .listen-track-avatar { width: 32px; height: 32px; font-size: 11px; }
+          .listen-track-name { font-size: 12px; }
+          .listen-track-artist { font-size: 10px; }
         }
         @media (max-width: 480px) {
-          .listen-card { padding: 16px; }
-          .listen-np-title { font-size: 18px; }
+          .listen-card { padding: 14px; }
+          .listen-title { font-size: 24px; }
+          .listen-np-title { font-size: 16px; }
           .listen-desc { font-size: 13px; }
+          .listen-controls { flex-wrap: wrap; justify-content: center; gap: 8px; }
         }
       `}} />
     </section>
