@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatDateShort } from "@/lib/utils/formatDate";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
               <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 10, border: "1px solid var(--border)" }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{s.profiles?.nome || "Cliente"}</div>
-                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{s.data} • {s.hora_inicio}–{s.hora_fim} • {s.tipo}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{formatDateShort(s.data)} • {s.hora_inicio}–{s.hora_fim} • {s.tipo}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => handleAction(s.id, "confirmada")} style={{ width: 30, height: 30, background: "rgba(34,197,94,.1)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(34,197,94,.2)", cursor: "pointer" }}>
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
             {sessoes.map(s => (
               <tr key={s.id}>
                 <td style={{ color: "var(--text)", fontWeight: 500 }}>{s.profiles?.nome || "—"}</td>
-                <td>{s.data}</td>
+                <td>{formatDateShort(s.data)}</td>
                 <td>{s.hora_inicio}–{s.hora_fim}</td>
                 <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
                 <td><span className={`status-pill ${s.estado === "confirmada" ? "sp-ok" : s.estado === "pendente" ? "sp-pend" : s.estado === "recusada" || s.estado === "cancelada" ? "sp-cancel" : "sp-done"}`}>{s.estado}</span></td>
