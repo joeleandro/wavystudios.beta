@@ -60,3 +60,41 @@ export async function wppSessaoConfirmada(telefone: string, sessao: any) {
     console.error('[WPP] Error:', err)
   }
 }
+
+
+
+export async function wppEntregaCliente(
+  telefone: string,
+  clienteNome: string,
+  nomeFile: string,
+  tipo: string,
+  expiresAt: Date
+) {
+  if (!process.env.TWILIO_SID || !process.env.TWILIO_TOKEN || !telefone) return
+
+  const body = new URLSearchParams({
+    From: 'whatsapp:+14155238886',
+    To: `whatsapp:${telefone}`,
+    Body:
+      `🎵 *Entrega Wavy Studios*\n\n` +
+      `Olá ${clienteNome}! O teu ${tipo} "${nomeFile}" está pronto para download.\n\n` +
+      `📅 Disponível até: ${expiresAt.toLocaleDateString('pt-PT')}\n` +
+      `🔗 Acede ao Dashboard para fazer download.`,
+  })
+
+  try {
+    await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_SID}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${process.env.TWILIO_SID}:${process.env.TWILIO_TOKEN}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      }
+    )
+  } catch (err) {
+    console.error('[WPP] Entrega error:', err)
+  }
+}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" fill="none">
+  <!-- 3 Prisms / Triangular geometric shapes - Wavy Studios logo -->
+  <!-- Left prism -->
+  <polygon points="40,180 90,20 140,180" fill="white" opacity="0.85"/>
+  <!-- Center prism (slightly forward/larger) -->
+  <polygon points="100,180 150,10 200,180" fill="white" opacity="1"/>
+  <!-- Right prism -->
+  <polygon points="160,180 210,20 260,180" fill="white" opacity="0.85"/>
+  <!-- Subtle light refraction lines -->
+  <line x1="90" y1="20" x2="90" y2="180" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+  <line x1="150" y1="10" x2="150" y2="180" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+  <line x1="210" y1="20" x2="210" y2="180" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+</svg>

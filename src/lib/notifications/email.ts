@@ -131,3 +131,42 @@ export async function emailContacto(nome: string, email: string, assunto: string
     return { success: false }
   }
 }
+
+
+
+export async function emailEntregaCliente(
+  clienteEmail: string,
+  clienteNome: string,
+  nomeFile: string,
+  tipo: string,
+  expiresAt: Date
+) {
+  const resend = getResend()
+  if (!resend) return
+
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+
+  try {
+    await resend.emails.send({
+      from: 'Wavy Studios <onboarding@resend.dev>',
+      to: clienteEmail,
+      subject: `Entrega pronta: ${nomeFile}`,
+      html: `
+        <div style="font-family:system-ui;max-width:500px;margin:0 auto;padding:24px;background:#111;color:#e5e2e1;border-radius:12px">
+          <h2 style="color:#ffb4a8;margin-bottom:16px">Entrega disponível 🎵</h2>
+          <p>Olá <strong>${clienteNome}</strong>,</p>
+          <p>O teu <strong>${tipo}</strong> "<em>${nomeFile}</em>" está pronto para download.</p>
+          <p style="color:#aaa">Disponível até: <strong>${expiresAt.toLocaleDateString('pt-PT')}</strong></p>
+          <br/>
+          <a href="${baseUrl}/dashboard"
+             style="background:#8b0000;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
+            Ver no Dashboard
+          </a>
+        </div>
+      `,
+    })
+    console.log('[EMAIL] Entrega sent to:', clienteEmail)
+  } catch (err) {
+    console.error('[EMAIL] Entrega error:', err)
+  }
+}
