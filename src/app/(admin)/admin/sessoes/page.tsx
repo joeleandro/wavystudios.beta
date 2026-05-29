@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { UploadModal } from "@/components/admin/upload-modal";
+import { formatDateShort } from "@/lib/utils/formatDate";
 
 type Sessao = {
   id: string;
@@ -12,6 +14,7 @@ type Sessao = {
   estado: string;
   duracao_minutos: number;
   produtor?: string | null;
+  cliente_id: string;
   profiles?: { nome?: string };
 };
 
@@ -19,6 +22,7 @@ export default function AdminSessoesPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [filter, setFilter] = useState("todas");
   const [primeiroNome, setPrimeiroNome] = useState("Admin");
+  const [uploadTarget, setUploadTarget] = useState<{ sessaoId: string; clienteId: string; clienteNome: string } | null>(null);
   const supabase = createClient();
 
   useEffect(() => { loadData(); }, []);
@@ -84,7 +88,7 @@ export default function AdminSessoesPage() {
             {s.profiles?.nome || "Cliente"}
           </div>
           <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
-            {s.data} • {s.hora_inicio}–{s.hora_fim}
+            {formatDateShort(s.data)} • {s.hora_inicio}–{s.hora_fim}
           </div>
           <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2, textTransform: "capitalize" }}>
             {s.tipo?.replace("_", "/")}
@@ -162,6 +166,27 @@ export default function AdminSessoesPage() {
           }}
         >
           Concluir
+        </button>
+      )}
+      {mode === "actions" && s.estado === "concluida" && (
+        <button
+          onClick={() => setUploadTarget({ sessaoId: s.id, clienteId: (s as any).cliente_id, clienteNome: s.profiles?.nome || "Cliente" })}
+          style={{
+            fontSize: 10,
+            padding: "6px 10px",
+            background: "rgba(139,0,0,.1)",
+            border: "1px solid rgba(139,0,0,.2)",
+            borderRadius: 6,
+            color: "var(--primary)",
+            cursor: "pointer",
+            letterSpacing: ".1em",
+            textTransform: "uppercase",
+            fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 4,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 12 }}>upload_file</span>
+          Enviar Ficheiro
         </button>
       )}
     </div>
@@ -266,7 +291,7 @@ export default function AdminSessoesPage() {
               {filtered.map((s) => (
                 <tr key={s.id}>
                   <td style={{ color: "var(--text)", fontWeight: 500 }}>{s.profiles?.nome || "—"}</td>
-                  <td>{s.data}</td>
+                  <td>{formatDateShort(s.data)}</td>
                   <td>{s.hora_inicio}–{s.hora_fim}</td>
                   <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
                   <td>{s.duracao_minutos}min</td>
@@ -335,6 +360,24 @@ export default function AdminSessoesPage() {
                         Concluir
                       </button>
                     )}
+                    {s.estado === "concluida" && (
+                      <button
+                        onClick={() => setUploadTarget({ sessaoId: s.id, clienteId: s.cliente_id, clienteNome: s.profiles?.nome || "Cliente" })}
+                        style={{
+                          fontSize: 9,
+                          padding: "4px 10px",
+                          background: "rgba(139,0,0,.1)",
+                          border: "1px solid rgba(139,0,0,.2)",
+                          borderRadius: 4,
+                          color: "var(--primary)",
+                          cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 3,
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: 11 }}>upload_file</span>
+                        Enviar
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -347,6 +390,17 @@ export default function AdminSessoesPage() {
           )}
         </div>
       </div>
+
+      {/* Upload Modal */}
+      {uploadTarget && (
+        <UploadModal
+          sessaoId={uploadTarget.sessaoId}
+          clienteId={uploadTarget.clienteId}
+          clienteNome={uploadTarget.clienteNome}
+          onClose={() => setUploadTarget(null)}
+          onSuccess={() => loadData()}
+        />
+      )}
     </div>
   );
 }
