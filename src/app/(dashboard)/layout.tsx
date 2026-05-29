@@ -8,12 +8,13 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { href: "/dashboard", icon: "grid_view", label: "Dashboard" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
+  { href: "/entregas", icon: "cloud_download", label: "Entregas" },
 ];
 
 const bottomNavItems = [
   { href: "/dashboard", icon: "home", label: "Início" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
-  { href: "/dashboard?notif=1", icon: "notifications", label: "Notif." },
+  { href: "/entregas", icon: "cloud_download", label: "Entregas" },
   { href: "/dashboard?perfil=1", icon: "person", label: "Perfil" },
 ];
 
@@ -140,7 +141,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="db-tooltip">Site</div>
         </Link>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="db-nav-item">
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="db-nav-item"
+            style={{ cursor: "pointer" }}
+          >
             <span className="material-symbols-outlined">logout</span>
             <div className="db-tooltip">Sair</div>
           </button>
@@ -156,10 +167,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span style={{ color: "var(--text2)" }}>Olá, {primeiroNome} 👋</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="db-icon-btn">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard?notif=1")}
+              className="db-icon-btn"
+              style={{ cursor: "pointer" }}
+            >
               <span className="material-symbols-outlined" style={{ fontSize: 17 }}>notifications</span>
               <div className="db-notif-dot" />
-            </div>
+            </button>
             <div className="db-user-chip">
               <div className="db-avatar" style={{ width: 28, height: 28, fontSize: 11 }}>{initials}</div>
               <span style={{ fontSize: 12, color: "var(--text2)" }}>{primeiroNome}</span>

@@ -3,17 +3,33 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Check if user is logged in
+  useEffect(() => {
+    async function checkUser() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } catch {}
+      setCheckingAuth(false);
+    }
+    checkUser();
   }, []);
 
   return (
@@ -36,9 +52,25 @@ export function Navigation() {
           <Link href="/#artists" className="nav-link">Artistas</Link>
         </div>
 
-        {/* Desktop: Liquid Metal Login */}
+        {/* Desktop: Show profile icon if logged in, otherwise Login button */}
         <div className="nav-right nav-desktop-only">
-          <LiquidMetalButton label="Login" onClick={() => router.push("/login")} />
+          {!checkingAuth && user ? (
+            <Link
+              href="/dashboard"
+              style={{
+                width: 40, height: 40, borderRadius: "50%",
+                background: "linear-gradient(135deg, var(--primary-c), #c41a1a)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "1px solid rgba(255,180,168,.2)",
+                transition: "all .2s",
+              }}
+              title="Meu Dashboard"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 20, color: "#fff" }}>person</span>
+            </Link>
+          ) : (
+            <LiquidMetalButton label="Login" onClick={() => router.push("/login")} />
+          )}
         </div>
 
         {/* Mobile: Hamburger menu button */}
@@ -62,7 +94,11 @@ export function Navigation() {
               <Link href="/precos" onClick={() => setMobileOpen(false)}>Serviços</Link>
               <Link href="/estudios" onClick={() => setMobileOpen(false)}>Estúdios</Link>
               <Link href="/sobre" onClick={() => setMobileOpen(false)}>Sobre</Link>
-              <Link href="/login" onClick={() => setMobileOpen(false)} style={{ color: "var(--primary)" }}>Login</Link>
+              {user ? (
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} style={{ color: "var(--primary)" }}>Dashboard</Link>
+              ) : (
+                <Link href="/login" onClick={() => setMobileOpen(false)} style={{ color: "var(--primary)" }}>Login</Link>
+              )}
             </div>
           </div>
         </div>

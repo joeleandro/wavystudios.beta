@@ -101,7 +101,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="db-tooltip">Site</div>
         </Link>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="db-nav-item">
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="db-nav-item"
+            style={{ cursor: "pointer" }}
+          >
             <span className="material-symbols-outlined">logout</span>
             <div className="db-tooltip">Sair</div>
           </button>

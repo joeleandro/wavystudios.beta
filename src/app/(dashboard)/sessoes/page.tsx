@@ -129,7 +129,7 @@ export default function MarcarSessaoPage() {
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <div className="db-page-title bebas">Marcar Sessão</div>
@@ -398,8 +398,9 @@ export default function MarcarSessaoPage() {
           border-color: rgba(139,0,0,.3); background: rgba(139,0,0,.04);
         }
         .booking-date-btn[data-selected="true"] {
-          background: rgba(139,0,0,.15); border-color: rgba(139,0,0,.5);
-          color: var(--primary); box-shadow: 0 0 12px rgba(139,0,0,.15);
+          background: rgba(139,0,0,.2); border-color: var(--primary-c);
+          color: #fff; box-shadow: 0 0 16px rgba(139,0,0,.25);
+          font-weight: 700;
         }
         .booking-date-btn[data-disabled="true"] {
           opacity: 0.15; cursor: not-allowed;

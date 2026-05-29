@@ -360,7 +360,8 @@ img { display: block; max-width: 100%; }
   display: flex; align-items: center; gap: 8px; padding: 3px 12px 3px 3px;
   border: 1px solid var(--border); border-radius: 20px; background: rgba(255,255,255,.02); cursor: pointer;
 }
-.db-content { flex: 1; overflow-y: auto; padding: 28px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent; }
+.db-content { flex: 1; overflow-y: auto; padding: 28px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent; width: 100%; }
+.db-content > * { width: 100%; }
 .db-content::-webkit-scrollbar { width: 4px; }
 .db-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
 .db-page-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: .05em; }
