@@ -7,7 +7,11 @@ export const metadata = {
 
 export default function CycloPage() {
   return (
+<<<<<<< HEAD
     <main style={{ paddingTop: 80 }}>
+=======
+    <main>
+>>>>>>> origin/main
       <CycloSection />
     </main>
   );

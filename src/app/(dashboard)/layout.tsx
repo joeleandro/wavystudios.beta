@@ -12,10 +12,14 @@ const navItems = [
 ];
 
 const bottomNavItems = [
-  { href: "/dashboard", icon: "home", label: "Início" },
+  { href: "/dashboard", icon: "grid_view", label: "Dashboard" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
+<<<<<<< HEAD
   { href: "/entregas", icon: "cloud_download", label: "Entregas" },
   { href: "/dashboard?perfil=1", icon: "person", label: "Perfil" },
+=======
+  { href: "/", icon: "home", label: "Início" },
+>>>>>>> origin/main
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -120,9 +124,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Detect active tab on bottom nav
   const isActive = (href: string) => {
-    const cleanHref = href.split("?")[0];
-    if (cleanHref === "/dashboard") return pathname === "/dashboard";
-    return pathname?.startsWith(cleanHref);
+    if (href === "/") return false; // "Início" never shows as active in dashboard
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname?.startsWith(href);
   };
 
   return (
@@ -136,9 +140,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         ))}
         <div className="db-divider" />
-        <Link href="/" className="db-nav-item">
-          <span className="material-symbols-outlined">home</span>
-          <div className="db-tooltip">Site</div>
+        <Link href="/" className="db-nav-item" title="Voltar ao site">
+          <span className="material-symbols-outlined">arrow_back</span>
+          <div className="db-tooltip">Voltar ao site</div>
         </Link>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           <button

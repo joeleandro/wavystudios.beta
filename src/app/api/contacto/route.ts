@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { emailContacto } from '@/lib/notifications/email'
+import { emailContacto } from '@/lib/email/resend'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()

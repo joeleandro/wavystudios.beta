@@ -29,7 +29,7 @@ export function TestimonialsSection() {
         <h2 className="bebas" style={{ fontSize: "clamp(48px, 7vw, 80px)", color: "var(--text)" }}>TESTEMUNHOS</h2>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+      <div className="testimonials-grid">
         {testimonials.map((t) => (
           <div key={t.nome} className="glass" style={{ padding: 28, borderRadius: 16, transition: "all .3s" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -48,7 +48,19 @@ export function TestimonialsSection() {
         ))}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `@media(max-width:768px){[style*="grid-template-columns: repeat(3"]{grid-template-columns:1fr!important}}` }} />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .testimonials-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+        @media (max-width: 768px) {
+          .testimonials-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px;
+          }
+        }
+      `}} />
     </section>
   );
 }
