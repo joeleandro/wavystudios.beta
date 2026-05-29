@@ -14,12 +14,8 @@ const navItems = [
 const bottomNavItems = [
   { href: "/dashboard", icon: "grid_view", label: "Dashboard" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
-<<<<<<< HEAD
   { href: "/entregas", icon: "cloud_download", label: "Entregas" },
   { href: "/dashboard?perfil=1", icon: "person", label: "Perfil" },
-=======
-  { href: "/", icon: "home", label: "Início" },
->>>>>>> origin/main
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

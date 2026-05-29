@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-<<<<<<< HEAD
 import { UploadModal } from "@/components/admin/upload-modal";
-=======
 import { formatDateShort } from "@/lib/utils/formatDate";
->>>>>>> origin/main
 
 type Sessao = {
   id: string;
