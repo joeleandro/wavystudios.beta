@@ -2,12 +2,12 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 const BUFFER_MINUTES = 30 // 30min buffer between sessions
 
-// Studio operating hours
+// Studio operating hours: 12:00 (noon) to 04:00 (4 AM next day)
+// We use "extended minutes" where 04:00 next day = 28*60 = 1680
 export const HORA_ABERTURA = '12:00'
-export const HORA_FECHO = '16:00'
-// Maximum end time including the buffer allowance — last slot may end at 16:00,
-// and the +30min buffer is allowed up to 16:30 so the last slot is not blocked.
-export const HORA_FECHO_COM_BUFFER = '16:30'
+export const HORA_FECHO = '04:00' // Next day
+const ABERTURA_MIN = 12 * 60 // 720
+const FECHO_MIN = 28 * 60 // 1680 (4:00 next day in extended format)
 
 export async function verificarConflito(
   supabase: SupabaseClient,
@@ -16,9 +16,8 @@ export async function verificarConflito(
   horaFim: string,
   sessaoIdExcluir?: string
 ): Promise<{ conflito: boolean; proximoSlot?: string }> {
-  // FIX 1: Add 30min buffer — check against hora_fim + 30min
-  const horaFimComBuffer = minutesToTime(timeToMinutes(horaFim) + BUFFER_MINUTES)
-  const horaInicioComBuffer = minutesToTime(Math.max(0, timeToMinutes(horaInicio) - BUFFER_MINUTES))
+  const horaFimComBuffer = minutesToTime(toExtended(horaFim) + BUFFER_MINUTES)
+  const horaInicioComBuffer = minutesToTime(Math.max(0, toExtended(horaInicio) - BUFFER_MINUTES))
 
   let query = supabase
     .from('sessoes')
@@ -43,23 +42,22 @@ export async function verificarConflito(
       .in('estado', ['pendente', 'confirmada'])
       .order('hora_inicio')
 
-    const duracao = timeToMinutes(horaFim) - timeToMinutes(horaInicio)
-    let nextSlot = HORA_ABERTURA
+    const duracao = toExtended(horaFim) - toExtended(horaInicio)
+    let nextSlot = ABERTURA_MIN
 
     for (const s of allSessions || []) {
-      // Account for buffer when finding next slot
-      const sessionEndWithBuffer = timeToMinutes(s.hora_fim) + BUFFER_MINUTES
-      if (sessionEndWithBuffer <= timeToMinutes(nextSlot)) continue
-      if (timeToMinutes(nextSlot) + duracao + BUFFER_MINUTES <= timeToMinutes(s.hora_inicio)) break
-      nextSlot = minutesToTime(sessionEndWithBuffer)
+      const sessionEndWithBuffer = toExtended(s.hora_fim) + BUFFER_MINUTES
+      if (sessionEndWithBuffer <= nextSlot) continue
+      if (nextSlot + duracao + BUFFER_MINUTES <= toExtended(s.hora_inicio)) break
+      nextSlot = sessionEndWithBuffer
     }
 
-    // Last possible slot: hora_fim must be <= HORA_FECHO (16:00)
-    if (timeToMinutes(nextSlot) + duracao > timeToMinutes(HORA_FECHO)) {
+    // Last possible slot: hora_fim must be <= FECHO_MIN
+    if (nextSlot + duracao > FECHO_MIN) {
       return { conflito: true, proximoSlot: undefined }
     }
 
-    return { conflito: true, proximoSlot: nextSlot }
+    return { conflito: true, proximoSlot: minutesToTime(nextSlot) }
   }
 
   return { conflito: false }
@@ -78,37 +76,40 @@ export async function obterSlotsDisponiveis(
     .order('hora_inicio')
 
   const slots: string[] = []
-  const startMinutes = timeToMinutes(HORA_ABERTURA) // 12:00
-  const endMinutes = timeToMinutes(HORA_FECHO) // 16:00
-  const endWithBufferMinutes = timeToMinutes(HORA_FECHO_COM_BUFFER) // 16:30
 
-  // Generate slots based on duration. The last slot is one whose
-  // hora_fim <= HORA_FECHO (16:00), with the +30min buffer permitted up to 16:30.
-  // Step uses session duration so slots line up cleanly:
-  //   60min → 12:00, 13:00, 14:00, 15:00 (last ends at 16:00)
-  //   90min → 12:00, 13:30 (next would end at 16:30, slightly past close — skipped)
-  //  120min → 12:00, 14:00 (last ends at 16:00)
-  for (let minutes = startMinutes; ; minutes += duracao) {
+  // Generate slots from 12:00 to 04:00 (next day)
+  // A slot is valid if its end time (start + duration) <= FECHO_MIN (04:00)
+  for (let minutes = ABERTURA_MIN; minutes + duracao <= FECHO_MIN; minutes += duracao) {
     const slotEnd = minutes + duracao
-    if (slotEnd > endMinutes) break
-    // Buffer rule: hora_fim + 30min must not exceed HORA_FECHO_COM_BUFFER
-    // (16:30) — for the listed step it's always satisfied when slotEnd <= 16:00.
-    if (slotEnd + BUFFER_MINUTES > endWithBufferMinutes) break
 
-    const slotStart = minutesToTime(minutes)
     const hasConflict = (existing || []).some((s: any) => {
-      const existStart = timeToMinutes(s.hora_inicio)
-      const existEnd = timeToMinutes(s.hora_fim) + BUFFER_MINUTES
+      const existStart = toExtended(s.hora_inicio)
+      const existEnd = toExtended(s.hora_fim) + BUFFER_MINUTES
       return minutes < existEnd && slotEnd + BUFFER_MINUTES > existStart
     })
-    if (!hasConflict) slots.push(slotStart)
+
+    if (!hasConflict) {
+      slots.push(minutesToTime(minutes))
+    }
   }
 
   return slots
 }
 
 export function calcularHoraFim(horaInicio: string, duracaoMin: number): string {
-  return minutesToTime(timeToMinutes(horaInicio) + duracaoMin)
+  return minutesToTime(toExtended(horaInicio) + duracaoMin)
+}
+
+/**
+ * Convert "HH:MM" to extended minutes (handles times past midnight).
+ * Hours 00:00–04:00 are treated as next-day (add 24h).
+ * Hours 12:00–23:59 are treated as same-day.
+ */
+function toExtended(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  // If hour < 5 (i.e. 00:00–04:59), treat as next day
+  if (h < 5) return (h + 24) * 60 + m
+  return h * 60 + m
 }
 
 export function timeToMinutes(time: string): number {
@@ -117,7 +118,9 @@ export function timeToMinutes(time: string): number {
 }
 
 export function minutesToTime(minutes: number): string {
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
+  // Normalize back: if >= 24*60 (1440), wrap to next day representation
+  const normalized = minutes >= 24 * 60 ? minutes - 24 * 60 : minutes
+  const h = Math.floor(normalized / 60)
+  const m = normalized % 60
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
 }

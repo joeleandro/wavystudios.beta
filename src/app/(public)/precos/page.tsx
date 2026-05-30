@@ -225,7 +225,7 @@ export default function PrecosPage() {
             Disponibilidade
           </h2>
           <p style={{ fontSize: 13, color: "var(--text3)" }}>
-            Horários ocupados este mês (12h–16h)
+            Horários ocupados este mês (12h–04h)
           </p>
         </div>
         <div className="db-card" style={{ padding: "24px" }}>

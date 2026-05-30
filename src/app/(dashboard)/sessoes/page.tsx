@@ -134,7 +134,7 @@ export default function MarcarSessaoPage() {
       <div style={{ marginBottom: 28 }}>
         <div className="db-page-title bebas">Marcar Sessão</div>
         <div className="db-page-sub">
-          {duracao}min por sessão • Horário: 12h – 16h (meio-dia à tarde)
+          {duracao}min por sessão • Horário: 12h – 04h (meio-dia à madrugada)
         </div>
       </div>
 
