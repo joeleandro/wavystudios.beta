@@ -38,19 +38,26 @@ export async function verificarHorasSemana(
   }
 }
 
+/**
+ * Get Monday (start of week) for a given date — timezone-safe using UTC.
+ */
 export function getSegunda(date: Date): string {
   const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
+  // Use UTC to avoid timezone shifts
+  const day = d.getUTCDay() // 0=Dom, 1=Seg, ...
+  const diff = day === 0 ? -6 : 1 - day
+  d.setUTCDate(d.getUTCDate() + diff)
   return d.toISOString().split('T')[0]
 }
 
+/**
+ * Get Sunday (end of week) for a given date — timezone-safe using UTC.
+ */
 function getSexta(date: Date): string {
   const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? 0 : 7)
-  d.setDate(diff)
+  const day = d.getUTCDay() // 0=Dom, 1=Seg, ...
+  const diff = day === 0 ? 0 : 7 - day
+  d.setUTCDate(d.getUTCDate() + diff)
   return d.toISOString().split('T')[0]
 }
 

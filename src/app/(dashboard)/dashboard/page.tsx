@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatDateShort, formatDateParts } from "@/lib/utils/formatDate";
+import { inicioDoMes, fimDoMes } from "@/lib/utils/dates";
 
 export default function ClienteDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -11,6 +12,7 @@ export default function ClienteDashboard() {
   const [sessoes, setSessoes] = useState<any[]>([]);
   const [horasInfo, setHorasInfo] = useState<any>(null);
   const [profileMissing, setProfileMissing] = useState(false);
+  const [monthlyInfo, setMonthlyInfo] = useState<any>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -65,14 +67,13 @@ export default function ClienteDashboard() {
       .limit(10);
     setSessoes(sess || []);
 
-    // Calculate weekly hours
+    // Calculate weekly hours (UTC-safe)
     const now = new Date();
-    const day = now.getDay();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - day + (day === 0 ? -6 : 1));
+    const utcDay = now.getUTCDay(); // 0=Sun, 1=Mon ...
+    const mondayOffset = utcDay === 0 ? -6 : 1 - utcDay;
+    const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + mondayOffset));
     const mondayStr = monday.toISOString().split("T")[0];
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    const sunday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 6));
     const sundayStr = sunday.toISOString().split("T")[0];
 
     const { data: weekSess } = await supabase
@@ -87,22 +88,65 @@ export default function ClienteDashboard() {
     const planoMin = (prof?.planos?.horas_semanais || 0) * 60;
 
     setHorasInfo({ usadas: usadasMin, plano: planoMin, restantes: Math.max(0, planoMin - usadasMin) });
+
+    // ─── Monthly data ───
+    const mesInicio = inicioDoMes(now);
+    const mesFim = fimDoMes(now);
+
+    // Monthly hours used (sum duracao_minutos of all sessions this month)
+    const { data: monthSess } = await supabase
+      .from("sessoes")
+      .select("duracao_minutos")
+      .eq("cliente_id", user.id)
+      .gte("data", mesInicio)
+      .lte("data", mesFim)
+      .in("estado", ["pendente", "confirmada", "concluida"]);
+
+    const horasMensaisUsadasMin = (monthSess || []).reduce((s: number, x: any) => s + x.duracao_minutos, 0);
+    const horasMensaisPlanoMin = (prof?.planos?.horas_semanais || 0) * 4 * 60; // horas_semanais * 4 weeks
+    const horasMensaisRestantesMin = Math.max(0, horasMensaisPlanoMin - horasMensaisUsadasMin);
+
+    // Mix/Master used this month
+    const { count: mmUsados } = await supabase
+      .from("sessoes")
+      .select("id", { count: "exact", head: true })
+      .eq("cliente_id", user.id)
+      .eq("tipo", "mix_master")
+      .gte("data", mesInicio)
+      .lte("data", mesFim)
+      .in("estado", ["confirmada", "concluida"]);
+
+    const mmTotal = prof?.planos?.mix_master_mes || 0;
+    const mmRestantes = Math.max(0, mmTotal - (mmUsados ?? 0));
+
+    setMonthlyInfo({
+      horasUsadasMin: horasMensaisUsadasMin,
+      horasPlanoMin: horasMensaisPlanoMin,
+      horasRestantesMin: horasMensaisRestantesMin,
+      mmUsados: mmUsados ?? 0,
+      mmTotal,
+      mmRestantes,
+    });
   }
 
   const pct = horasInfo ? Math.round((horasInfo.usadas / Math.max(1, horasInfo.plano)) * 100) : 0;
+  const pctMensal = monthlyInfo ? Math.round((monthlyInfo.horasUsadasMin / Math.max(1, monthlyInfo.horasPlanoMin)) * 100) : 0;
   const proximaSessao = sessoes.find(s => s.estado === "confirmada" || s.estado === "pendente");
 
-  // FIX: personalized greeting using first name
+  // Personalized greeting using first name
   const primeiroNome =
     profile?.nome?.split(" ")[0] ||
     user?.email?.split("@")[0] ||
     "artista";
 
+  const plano = profile?.planos;
+  const planoId = plano?.id;
+
   return (
     <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
         <div className="db-page-title bebas">Olá, {primeiroNome} 👋</div>
-        <div className="db-page-sub">PLANO {profile?.planos?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}</div>
+        <div className="db-page-sub">PLANO {plano?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}</div>
       </div>
 
       {/* Friendly empty state instead of error */}
@@ -130,11 +174,12 @@ export default function ClienteDashboard() {
         </div>
       )}
 
+      {/* ─── ROW 1: Weekly stats ─── */}
       <div className="db-grid-4">
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Horas restantes</div>
           <div className="db-stat-val">{horasInfo ? (horasInfo.restantes / 60).toFixed(1) : 0}<span className="u">h</span></div>
-          <div className="db-stat-desc">de {profile?.planos?.horas_semanais || 0}h semanais</div>
+          <div className="db-stat-desc">de {plano?.horas_semanais || 0}h semanais</div>
           <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pct}%` }} /></div>
         </div>
 
@@ -163,10 +208,81 @@ export default function ClienteDashboard() {
 
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Duração</div>
-          <div className="db-stat-val">{profile?.planos?.duracao_sessao_min || 0}<span className="u">min</span></div>
+          <div className="db-stat-val">{plano?.duracao_sessao_min || 0}<span className="u">min</span></div>
           <div className="db-stat-desc">por sessão</div>
         </div>
       </div>
+
+      {/* ─── ROW 2: Monthly plan details ─── */}
+      <div className="db-grid-4" style={{ marginTop: 12 }}>
+        {/* Monthly hours */}
+        <div className="db-card red-glow">
+          <div className="db-card-label"><div className="dot" />Hrs mensais</div>
+          <div className="db-stat-val">{monthlyInfo ? (monthlyInfo.horasRestantesMin / 60).toFixed(1) : 0}<span className="u">h</span></div>
+          <div className="db-stat-desc">de {(plano?.horas_semanais || 0) * 4}h mês</div>
+          <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pctMensal}%` }} /></div>
+        </div>
+
+        {/* Mix/Master */}
+        <div className="db-card red-glow">
+          <div className="db-card-label"><div className="dot" />Mix/Master</div>
+          <div className="db-stat-val" style={{ color: monthlyInfo?.mmRestantes === 0 ? "#f87171" : undefined }}>
+            {monthlyInfo?.mmRestantes ?? 0}
+          </div>
+          <div className="db-stat-desc">restantes ({monthlyInfo?.mmUsados ?? 0}/{monthlyInfo?.mmTotal ?? 0} usados)</div>
+        </div>
+
+        {/* Sessão Foto — conditional */}
+        {plano?.sessao_foto ? (
+          <div className="db-card red-glow">
+            <div className="db-card-label"><div className="dot" />Sessão foto</div>
+            <div className="db-stat-val" style={{ fontSize: 20 }}>INCLUÍDA</div>
+            <div className="db-stat-desc">AVANÇADO</div>
+          </div>
+        ) : (
+          <Link href="/precos" style={{ textDecoration: "none" }}>
+            <div className="db-card" style={{ background: "rgba(255,255,255,.015)", opacity: 0.6, cursor: "pointer" }}>
+              <div className="db-card-label"><div className="dot" />Sessão foto</div>
+              <div className="db-stat-val" style={{ fontSize: 18, display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>
+                UPGRADE
+              </div>
+              <div className="db-stat-desc">Plano Avançado</div>
+            </div>
+          </Link>
+        )}
+
+        {/* Instrumental — conditional */}
+        {plano?.instrumental ? (
+          <div className="db-card red-glow">
+            <div className="db-card-label"><div className="dot" />Instrumental</div>
+            <div className="db-stat-val" style={{ fontSize: 20 }}>INCLUÍDO</div>
+            <div className="db-stat-desc">AVANÇADO</div>
+          </div>
+        ) : (
+          <Link href="/precos" style={{ textDecoration: "none" }}>
+            <div className="db-card" style={{ background: "rgba(255,255,255,.015)", opacity: 0.6, cursor: "pointer" }}>
+              <div className="db-card-label"><div className="dot" />Instrumental</div>
+              <div className="db-stat-val" style={{ fontSize: 18, display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>
+                UPGRADE
+              </div>
+              <div className="db-stat-desc">Plano Avançado</div>
+            </div>
+          </Link>
+        )}
+      </div>
+
+      {/* Dir. Criativa — only show if plan has it */}
+      {plano?.direcao_criativa && (
+        <div className="db-grid-4" style={{ marginTop: 12 }}>
+          <div className="db-card red-glow">
+            <div className="db-card-label"><div className="dot" />Dir. Criativa</div>
+            <div className="db-stat-val" style={{ fontSize: 20 }}>ACTIVA</div>
+            <div className="db-stat-desc">AVANÇADO</div>
+          </div>
+        </div>
+      )}
 
       {/* Sessions table */}
       <div className="db-grid-main-sm" style={{ marginTop: 16 }}>
@@ -191,11 +307,25 @@ export default function ClienteDashboard() {
 
         <div className="db-card red-glow" style={{ background: "rgba(139,0,0,.04)", borderColor: "rgba(139,0,0,.2)" }}>
           <div className="db-card-label"><div className="dot" />Plano</div>
-          <div className="plano-name-big">{profile?.planos?.nome || "—"}</div>
+          <div className="plano-name-big">{plano?.nome || "—"}</div>
           <ul className="plano-feats" style={{ marginTop: 12 }}>
-            <li><span className="material-symbols-outlined">check_circle</span>{profile?.planos?.horas_semanais || 0}h/semana</li>
-            <li><span className="material-symbols-outlined">check_circle</span>Sessões de {profile?.planos?.duracao_sessao_min || 0}min</li>
-            <li><span className="material-symbols-outlined">check_circle</span>{profile?.planos?.mix_master_mes || 0} Mix/Master</li>
+            <li><span className="material-symbols-outlined">check_circle</span>{plano?.horas_semanais || 0}h/semana ({(plano?.horas_semanais || 0) * 4}h/mês)</li>
+            <li><span className="material-symbols-outlined">check_circle</span>Sessões de {plano?.duracao_sessao_min || 0}min</li>
+            <li><span className="material-symbols-outlined">check_circle</span>{plano?.mix_master_mes || 0} Mix/Master/mês</li>
+            {(planoId === 2 || planoId === 3) && (
+              <>
+                <li><span className="material-symbols-outlined">check_circle</span>Prioridade na marcação</li>
+                <li><span className="material-symbols-outlined">check_circle</span>Suporte dedicado</li>
+              </>
+            )}
+            {planoId === 3 && (
+              <>
+                {plano?.sessao_foto && <li><span className="material-symbols-outlined">check_circle</span>Sessão Fotográfica (15 fotos)</li>}
+                {plano?.instrumental && <li><span className="material-symbols-outlined">check_circle</span>1 Instrumental Exclusivo</li>}
+                {plano?.direcao_criativa && <li><span className="material-symbols-outlined">check_circle</span>Direção Criativa personalizada</li>}
+                {plano?.pagamento_5050 && <li><span className="material-symbols-outlined">check_circle</span>Pagamento 50/50 disponível</li>}
+              </>
+            )}
           </ul>
           <Link href="/sessoes" style={{ textDecoration: "none" }}>
             <button className="marcar-cta" style={{ marginTop: 16 }}>
