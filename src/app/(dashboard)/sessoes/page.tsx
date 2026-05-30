@@ -237,9 +237,11 @@ export default function MarcarSessaoPage() {
             </div>
           </div>
         ) : data ? (
-          <div style={{ marginTop: 10, fontSize: 13, color: "var(--text2)" }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: "middle", marginRight: 6, color: "var(--primary)" }}>calendar_today</span>
-            {format(new Date(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: pt })}
+          <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "rgba(139, 0, 0, 0.15)", border: "1px solid rgba(192, 57, 43, 0.35)", borderRadius: 10 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#C0392B" }}>calendar_today</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", textTransform: "capitalize" }}>
+              {format(new Date(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: pt })}
+            </span>
           </div>
         ) : null}
       </div>
@@ -398,9 +400,12 @@ export default function MarcarSessaoPage() {
           border-color: rgba(139,0,0,.3); background: rgba(139,0,0,.04);
         }
         .booking-date-btn[data-selected="true"] {
-          background: rgba(139,0,0,.15); border-color: rgba(139,0,0,.5);
-          color: var(--primary); box-shadow: 0 0 12px rgba(139,0,0,.15);
+          background: var(--primary-c); border-color: var(--primary-c);
+          color: #fff; box-shadow: 0 4px 18px rgba(139,0,0,.4);
+          transform: translateY(-2px);
         }
+        .booking-date-btn[data-selected="true"] .booking-date-day,
+        .booking-date-btn[data-selected="true"] .booking-date-month { color: rgba(255,255,255,.85); }
         .booking-date-btn[data-disabled="true"] {
           opacity: 0.15; cursor: not-allowed;
         }

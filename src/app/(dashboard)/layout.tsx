@@ -27,6 +27,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const supabase = createClient();
 
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("[Logout] error:", e);
+    }
+    // Force a full reload to clear all client state and cookies
+    window.location.href = "/login";
+  }
+
   useEffect(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -141,7 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="db-tooltip">Voltar ao site</div>
         </Link>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="db-nav-item">
+          <button onClick={handleLogout} className="db-nav-item">
             <span className="material-symbols-outlined">logout</span>
             <div className="db-tooltip">Sair</div>
           </button>
@@ -203,6 +213,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="db-bottom-nav-label">{item.label}</span>
             </Link>
           ))}
+          <button onClick={handleLogout} className="db-bottom-nav-item" aria-label="Sair">
+            <span className="material-symbols-outlined">logout</span>
+            <span className="db-bottom-nav-label">Sair</span>
+          </button>
         </nav>
       </div>
     </div>

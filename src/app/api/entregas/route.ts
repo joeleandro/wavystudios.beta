@@ -8,8 +8,6 @@ export const maxDuration = 60
 
 const BUCKET = 'wavy-entregas'
 const EXPIRY_DAYS = 14
-const MAX_SIZE = 500 * 1024 * 1024 // 500MB
-const ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.aiff', '.flac', '.zip', '.jpg', '.png']
 
 // GET /api/entregas — List entregas for current user (or all for admin)
 export async function GET() {
@@ -37,128 +35,104 @@ export async function GET() {
   return NextResponse.json({ entregas: entregas || [] })
 }
 
-// POST /api/entregas — Admin uploads a file for a client
+// POST /api/entregas — Admin confirms an upload (file already in Storage via signed URL)
+// Body (JSON): { sessao_id, cliente_id, tipo, nome_ficheiro, storage_path, tamanho_bytes }
 export async function POST(req: NextRequest) {
   try {
-    console.log('[ENTREGAS] 1. Recebendo request...')
+    console.log('[ENTREGAS] 1. Recebendo confirmação...')
     const supabase = await createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  // Check admin role
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') {
-    return NextResponse.json({ error: 'Apenas admin pode enviar ficheiros' }, { status: 403 })
-  }
+    // Check admin role
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Apenas admin pode enviar ficheiros' }, { status: 403 })
+    }
 
-  // Parse multipart form data
-  const formData = await req.formData()
-  const file = formData.get('file') as File | null
-  const sessaoId = formData.get('sessao_id') as string
-  const clienteId = formData.get('cliente_id') as string
-  const tipo = (formData.get('tipo') as string) || 'projecto_final'
-
-  if (!file) {
-    return NextResponse.json({ error: 'Ficheiro não enviado' }, { status: 400 })
-  }
-  if (!sessaoId || !clienteId) {
-    return NextResponse.json({ error: 'sessao_id e cliente_id são obrigatórios' }, { status: 400 })
-  }
-
-  console.log('[ENTREGAS] 2. File:', file.name, 'Size:', file.size, 'Type:', file.type)
-  console.log('[ENTREGAS] 3. sessaoId:', sessaoId, 'clienteId:', clienteId, 'tipo:', tipo)
-
-  // Validate file extension
-  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
-  if (!ALLOWED_EXTENSIONS.includes(ext)) {
-    return NextResponse.json({
-      error: `Formato não suportado (${ext}). Aceites: ${ALLOWED_EXTENSIONS.join(', ')}`,
-    }, { status: 400 })
-  }
-
-  // Validate file size
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: 'Ficheiro excede 500MB' }, { status: 400 })
-  }
-
-  // Use admin client for storage operations (bypass RLS)
-  const adminSupabase = await createSupabaseAdmin()
-
-  // Upload to storage
-  const storagePath = `${clienteId}/${sessaoId}/${Date.now()}_${file.name}`
-  const buffer = Buffer.from(await file.arrayBuffer())
-
-  const { error: uploadError } = await adminSupabase.storage
-    .from(BUCKET)
-    .upload(storagePath, buffer, {
-      contentType: file.type,
-      upsert: false,
-    })
-
-  if (uploadError) {
-    console.error('[ENTREGAS] Upload error:', uploadError)
-    return NextResponse.json({ error: `Erro no upload: ${uploadError.message}` }, { status: 500 })
-  }
-
-  // Calculate expiry date
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS)
-
-  // Insert record in DB
-  const { data: entrega, error: insertError } = await adminSupabase
-    .from('entregas')
-    .insert({
+    const body = await req.json()
+    const {
       sessao_id: sessaoId,
       cliente_id: clienteId,
-      nome_ficheiro: file.name,
-      tipo,
+      tipo = 'projecto_final',
+      nome_ficheiro: nomeFicheiro,
       storage_path: storagePath,
-      tamanho_bytes: file.size,
-      expires_at: expiresAt.toISOString(),
-      download_count: 0,
-      enviado_por: user.id,
+      tamanho_bytes: tamanhoBytes,
+    } = body
+
+    if (!sessaoId || !clienteId || !nomeFicheiro || !storagePath) {
+      return NextResponse.json({ error: 'Dados em falta (sessao_id, cliente_id, nome_ficheiro, storage_path)' }, { status: 400 })
+    }
+
+    console.log('[ENTREGAS] 2. Confirmar:', nomeFicheiro, storagePath, tamanhoBytes)
+
+    const adminSupabase = await createSupabaseAdmin()
+
+    // Verify the file actually exists in storage (defensive)
+    const { error: dlErr } = await adminSupabase.storage.from(BUCKET).download(storagePath)
+    if (dlErr) {
+      console.error('[ENTREGAS] File not found in storage:', dlErr)
+      return NextResponse.json({ error: 'Ficheiro não encontrado no storage. Tenta novamente.' }, { status: 400 })
+    }
+
+    // Calculate expiry date
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + EXPIRY_DAYS)
+
+    // Insert record in DB
+    const { data: entrega, error: insertError } = await adminSupabase
+      .from('entregas')
+      .insert({
+        sessao_id: sessaoId,
+        cliente_id: clienteId,
+        nome_ficheiro: nomeFicheiro,
+        tipo,
+        storage_path: storagePath,
+        tamanho_bytes: tamanhoBytes || 0,
+        expires_at: expiresAt.toISOString(),
+        download_count: 0,
+        enviado_por: user.id,
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      // Clean up uploaded file
+      await adminSupabase.storage.from(BUCKET).remove([storagePath])
+      console.error('[ENTREGAS] Insert error:', insertError)
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Notify client
+    const { data: cliente } = await adminSupabase.from('profiles').select('nome, telefone').eq('id', clienteId).single()
+    const { data: clienteAuth } = await adminSupabase.auth.admin.getUserById(clienteId)
+    const clienteEmail = clienteAuth?.user?.email
+
+    // Create dashboard notification
+    await adminSupabase.from('notificacoes').insert({
+      sessao_id: sessaoId,
+      destinatario: clienteId,
+      tipo: 'entrega',
+      canal: 'dashboard',
+      mensagem: `O teu ${tipo} "${nomeFicheiro}" está pronto para download. Disponível até ${expiresAt.toLocaleDateString('pt-PT')}.`,
     })
-    .select()
-    .single()
 
-  if (insertError) {
-    // Clean up uploaded file
-    await adminSupabase.storage.from(BUCKET).remove([storagePath])
-    console.error('[ENTREGAS] Insert error:', insertError)
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
-  }
+    // Send email (non-blocking)
+    if (clienteEmail && cliente) {
+      const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app'
+      emailEntregaFicheiro({
+        entrega: { nome_ficheiro: nomeFicheiro, tipo, expires_at: expiresAt.toISOString() },
+        cliente: { nome: cliente.nome, email: clienteEmail },
+        downloadUrl: `${baseUrl}/entregas`,
+      }).catch(console.error)
+    }
 
-  // Notify client
-  const { data: cliente } = await adminSupabase.from('profiles').select('nome').eq('id', clienteId).single()
-  const { data: clienteAuth } = await adminSupabase.auth.admin.getUserById(clienteId)
-  const clienteEmail = clienteAuth?.user?.email
+    // Send WPP (non-blocking)
+    if (cliente?.telefone && process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+      sendWppEntrega(cliente.telefone, cliente?.nome || 'Artista', nomeFicheiro, tipo, expiresAt).catch(console.error)
+    }
 
-  // Create dashboard notification
-  await adminSupabase.from('notificacoes').insert({
-    sessao_id: sessaoId,
-    destinatario: clienteId,
-    tipo: 'entrega',
-    canal: 'dashboard',
-    mensagem: `O teu ${tipo} "${file.name}" está pronto para download. Disponível até ${expiresAt.toLocaleDateString('pt-PT')}.`,
-  })
-
-  // Send email (non-blocking)
-  if (clienteEmail && cliente) {
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://wavystudios-beta.vercel.app'
-    emailEntregaFicheiro({
-      entrega: { nome_ficheiro: file.name, tipo, expires_at: expiresAt.toISOString() },
-      cliente: { nome: cliente.nome, email: clienteEmail },
-      downloadUrl: `${baseUrl}/entregas`,
-    }).catch(console.error)
-  }
-
-  // Send WPP (non-blocking)
-  const { data: clienteProfile } = await adminSupabase.from('profiles').select('telefone').eq('id', clienteId).single()
-  if (clienteProfile?.telefone && process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
-    sendWppEntrega(clienteProfile.telefone, cliente?.nome || 'Artista', file.name, tipo, expiresAt).catch(console.error)
-  }
-
-  return NextResponse.json({ entrega, message: 'Ficheiro enviado com sucesso!' })
+    return NextResponse.json({ entrega, message: 'Ficheiro enviado com sucesso!' })
   } catch (err) {
     console.error('[ENTREGAS] CATCH error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

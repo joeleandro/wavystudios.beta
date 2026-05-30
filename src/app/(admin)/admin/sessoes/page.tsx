@@ -67,23 +67,62 @@ export default function AdminSessoesPage() {
     setUploading(true);
     setUploadMsg("");
 
-    const formData = new FormData();
-    formData.append("file", uploadFile);
-    formData.append("sessao_id", uploadModal.id);
-    formData.append("cliente_id", uploadModal.cliente_id || "");
-    formData.append("tipo", uploadTipo);
+    const clienteId = uploadModal.cliente_id || "";
+    if (!clienteId) {
+      setUploadMsg("Cliente inválido nesta sessão");
+      setUploading(false);
+      return;
+    }
 
     try {
-      const res = await fetch("/api/entregas", { method: "POST", body: formData });
-      const data = await res.json();
-      if (res.ok) {
+      // 1. Request a signed upload URL (small JSON request — no body limit issue)
+      const params = new URLSearchParams({
+        sessao_id: uploadModal.id,
+        cliente_id: clienteId,
+        filename: uploadFile.name,
+      });
+      const urlRes = await fetch(`/api/entregas/upload-url?${params.toString()}`);
+      const urlData = await urlRes.json();
+      if (!urlRes.ok) {
+        setUploadMsg(urlData.error || "Erro ao preparar upload");
+        setUploading(false);
+        return;
+      }
+
+      // 2. Upload the file DIRECTLY to Supabase Storage (bypasses Vercel body limit)
+      const { error: upErr } = await supabase.storage
+        .from("wavy-entregas")
+        .uploadToSignedUrl(urlData.path, urlData.token, uploadFile, {
+          contentType: uploadFile.type || undefined,
+        });
+      if (upErr) {
+        setUploadMsg("Erro no upload: " + upErr.message);
+        setUploading(false);
+        return;
+      }
+
+      // 3. Confirm — create the DB record + notify the client
+      const confirmRes = await fetch("/api/entregas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessao_id: uploadModal.id,
+          cliente_id: clienteId,
+          tipo: uploadTipo,
+          nome_ficheiro: uploadFile.name,
+          storage_path: urlData.path,
+          tamanho_bytes: uploadFile.size,
+        }),
+      });
+      const confirmData = await confirmRes.json();
+      if (confirmRes.ok) {
         setUploadMsg("Ficheiro enviado com sucesso!");
         setTimeout(() => { setUploadModal(null); setUploadFile(null); setUploadMsg(""); setUploadTipo("projecto_final"); }, 1500);
       } else {
-        setUploadMsg(data.error || "Erro no upload");
+        setUploadMsg(confirmData.error || "Erro ao registar entrega");
       }
-    } catch {
-      setUploadMsg("Erro de rede");
+    } catch (e) {
+      setUploadMsg("Erro de rede: " + String(e));
     }
     setUploading(false);
   }
@@ -117,8 +156,11 @@ export default function AdminSessoesPage() {
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {s.profiles?.nome || "Cliente"}
           </div>
-          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
-            {formatDateShort(s.data)} • {s.hora_inicio}–{s.hora_fim}
+          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ display: "inline-block", padding: "2px 8px", background: "rgba(139,0,0,.15)", border: "1px solid rgba(192,57,43,.35)", borderRadius: 6, color: "#fff", fontWeight: 600, fontSize: 11 }}>
+              {formatDateShort(s.data)}
+            </span>
+            <span>{s.hora_inicio}–{s.hora_fim}</span>
           </div>
           <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2, textTransform: "capitalize" }}>
             {s.tipo?.replace("_", "/")}
@@ -319,7 +361,11 @@ export default function AdminSessoesPage() {
               {filtered.map((s) => (
                 <tr key={s.id}>
                   <td style={{ color: "var(--text)", fontWeight: 500 }}>{s.profiles?.nome || "—"}</td>
-                  <td>{formatDateShort(s.data)}</td>
+                  <td>
+                    <span style={{ display: "inline-block", padding: "3px 9px", background: "rgba(139,0,0,.15)", border: "1px solid rgba(192,57,43,.35)", borderRadius: 6, color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      {formatDateShort(s.data)}
+                    </span>
+                  </td>
                   <td>{s.hora_inicio}–{s.hora_fim}</td>
                   <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
                   <td>{s.duracao_minutos}min</td>
