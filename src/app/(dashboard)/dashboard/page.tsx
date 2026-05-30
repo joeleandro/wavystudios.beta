@@ -67,6 +67,11 @@ export default function ClienteDashboard() {
       .limit(10);
     setSessoes(sess || []);
 
+    // Cycle start = plan renewal date (data_inicio). Used hours only count
+    // sessions on/after this date, so "Renovar" resets all counters.
+    const cicloInicio: string | null = prof?.data_inicio || null;
+    const cicloFim: string | null = prof?.data_renovacao || null;
+
     // Calculate weekly hours (UTC-safe)
     const now = new Date();
     const utcDay = now.getUTCDay(); // 0=Sun, 1=Mon ...
@@ -76,11 +81,14 @@ export default function ClienteDashboard() {
     const sunday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 6));
     const sundayStr = sunday.toISOString().split("T")[0];
 
+    // Weekly lower bound respects the renewal date (don't count sessions before renewal)
+    const weekInicio = cicloInicio && cicloInicio > mondayStr ? cicloInicio : mondayStr;
+
     const { data: weekSess } = await supabase
       .from("sessoes")
       .select("duracao_minutos")
       .eq("cliente_id", user.id)
-      .gte("data", mondayStr)
+      .gte("data", weekInicio)
       .lte("data", sundayStr)
       .in("estado", ["pendente", "confirmada", "concluida"]);
 
@@ -89,11 +97,13 @@ export default function ClienteDashboard() {
 
     setHorasInfo({ usadas: usadasMin, plano: planoMin, restantes: Math.max(0, planoMin - usadasMin) });
 
-    // ─── Monthly data ───
-    const mesInicio = inicioDoMes(now);
-    const mesFim = fimDoMes(now);
+    // ─── Monthly / cycle data ───
+    // Use the renewal cycle (data_inicio → data_renovacao) when available;
+    // fall back to the calendar month otherwise.
+    const mesInicio = cicloInicio || inicioDoMes(now);
+    const mesFim = cicloFim || fimDoMes(now);
 
-    // Monthly hours used (sum duracao_minutos of all sessions this month)
+    // Monthly hours used (sum duracao_minutos of all sessions in the cycle)
     const { data: monthSess } = await supabase
       .from("sessoes")
       .select("duracao_minutos")
@@ -106,7 +116,7 @@ export default function ClienteDashboard() {
     const horasMensaisPlanoMin = (prof?.planos?.horas_semanais || 0) * 4 * 60; // horas_semanais * 4 weeks
     const horasMensaisRestantesMin = Math.max(0, horasMensaisPlanoMin - horasMensaisUsadasMin);
 
-    // Mix/Master used this month
+    // Mix/Master used this cycle
     const { count: mmUsados } = await supabase
       .from("sessoes")
       .select("id", { count: "exact", head: true })
