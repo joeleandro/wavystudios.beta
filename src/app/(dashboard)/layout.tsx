@@ -8,11 +8,13 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { href: "/dashboard", icon: "grid_view", label: "Dashboard" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
+  { href: "/entregas", icon: "cloud_download", label: "Entregas" },
 ];
 
 const bottomNavItems = [
   { href: "/dashboard", icon: "grid_view", label: "Dashboard" },
   { href: "/sessoes", icon: "calendar_month", label: "Sessões" },
+  { href: "/entregas", icon: "cloud_download", label: "Entregas" },
   { href: "/", icon: "home", label: "Início" },
 ];
 

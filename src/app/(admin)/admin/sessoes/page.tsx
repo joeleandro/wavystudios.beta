@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDateShort } from "@/lib/utils/formatDate";
 
@@ -13,6 +13,7 @@ type Sessao = {
   estado: string;
   duracao_minutos: number;
   produtor?: string | null;
+  cliente_id?: string;
   profiles?: { nome?: string };
 };
 
@@ -20,6 +21,12 @@ export default function AdminSessoesPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [filter, setFilter] = useState("todas");
   const [primeiroNome, setPrimeiroNome] = useState("Admin");
+  const [uploadModal, setUploadModal] = useState<Sessao | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTipo, setUploadTipo] = useState("projecto_final");
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   useEffect(() => { loadData(); }, []);
@@ -53,6 +60,32 @@ export default function AdminSessoesPage() {
       body: JSON.stringify({ sessao_id: id, estado }),
     });
     loadData();
+  }
+
+  async function handleUpload() {
+    if (!uploadFile || !uploadModal) return;
+    setUploading(true);
+    setUploadMsg("");
+
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    formData.append("sessao_id", uploadModal.id);
+    formData.append("cliente_id", uploadModal.cliente_id || "");
+    formData.append("tipo", uploadTipo);
+
+    try {
+      const res = await fetch("/api/entregas", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setUploadMsg("Ficheiro enviado com sucesso!");
+        setTimeout(() => { setUploadModal(null); setUploadFile(null); setUploadMsg(""); setUploadTipo("projecto_final"); }, 1500);
+      } else {
+        setUploadMsg(data.error || "Erro no upload");
+      }
+    } catch {
+      setUploadMsg("Erro de rede");
+    }
+    setUploading(false);
   }
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -163,6 +196,25 @@ export default function AdminSessoesPage() {
           }}
         >
           Concluir
+        </button>
+      )}
+      {mode === "actions" && s.estado === "concluida" && (
+        <button
+          onClick={() => setUploadModal(s)}
+          style={{
+            fontSize: 10,
+            padding: "6px 10px",
+            background: "rgba(139,0,0,.1)",
+            border: "1px solid rgba(139,0,0,.2)",
+            borderRadius: 6,
+            color: "var(--primary)",
+            cursor: "pointer",
+            letterSpacing: ".1em",
+            textTransform: "uppercase",
+            fontWeight: 600,
+          }}
+        >
+          Enviar Ficheiro
         </button>
       )}
     </div>
@@ -336,6 +388,22 @@ export default function AdminSessoesPage() {
                         Concluir
                       </button>
                     )}
+                    {s.estado === "concluida" && (
+                      <button
+                        onClick={() => setUploadModal(s)}
+                        style={{
+                          fontSize: 9,
+                          padding: "4px 10px",
+                          background: "rgba(139,0,0,.1)",
+                          border: "1px solid rgba(139,0,0,.2)",
+                          borderRadius: 4,
+                          color: "var(--primary)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Enviar Ficheiro
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -348,6 +416,125 @@ export default function AdminSessoesPage() {
           )}
         </div>
       </div>
+
+      {/* Upload Modal */}
+      {uploadModal && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => { setUploadModal(null); setUploadFile(null); setUploadMsg(""); }}
+        >
+          <div
+            style={{ width: "100%", maxWidth: 460, background: "#111", border: "1px solid var(--border)", borderRadius: 16, padding: 28 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Enviar Ficheiro</h3>
+              <button onClick={() => { setUploadModal(null); setUploadFile(null); setUploadMsg(""); }} style={{ color: "var(--text3)", fontSize: 20 }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 16 }}>
+              Cliente: <strong style={{ color: "var(--text)" }}>{uploadModal.profiles?.nome || "—"}</strong> • {uploadModal.data} • {uploadModal.tipo}
+            </div>
+
+            {/* Tipo select */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", letterSpacing: ".1em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tipo de entrega</label>
+              <select
+                value={uploadTipo}
+                onChange={(e) => setUploadTipo(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,.04)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13 }}
+              >
+                <option value="demo">Demo</option>
+                <option value="mix">Mix</option>
+                <option value="master">Master</option>
+                <option value="projecto_final">Projecto Final</option>
+                <option value="stems">Stems</option>
+                <option value="foto">Foto</option>
+              </select>
+            </div>
+
+            {/* File input / drop area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: "2px dashed rgba(139,0,0,.3)",
+                borderRadius: 12,
+                padding: "28px 16px",
+                textAlign: "center",
+                cursor: "pointer",
+                background: uploadFile ? "rgba(139,0,0,.05)" : "transparent",
+                transition: "background .2s",
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".mp3,.wav,.aiff,.flac,.zip,.jpg,.png"
+                style={{ display: "none" }}
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              />
+              {uploadFile ? (
+                <div>
+                  <span className="material-symbols-outlined" style={{ fontSize: 28, color: "var(--primary)", display: "block", marginBottom: 8 }}>audio_file</span>
+                  <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 500 }}>{uploadFile.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4 }}>{(uploadFile.size / 1024 / 1024).toFixed(1)} MB</div>
+                </div>
+              ) : (
+                <div>
+                  <span className="material-symbols-outlined" style={{ fontSize: 32, color: "var(--text3)", display: "block", marginBottom: 8 }}>cloud_upload</span>
+                  <div style={{ fontSize: 12, color: "var(--text3)" }}>Clique para selecionar ficheiro</div>
+                  <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>.mp3, .wav, .aiff, .flac, .zip, .jpg, .png • Máx 500MB</div>
+                </div>
+              )}
+            </div>
+
+            {/* Warning */}
+            <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(220,38,38,.06)", borderRadius: 8, border: "1px solid rgba(220,38,38,.15)" }}>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#f87171" }}>info</span>
+                O ficheiro será apagado automaticamente após 14 dias
+              </div>
+            </div>
+
+            {/* Messages */}
+            {uploadMsg && (
+              <div style={{ marginTop: 12, fontSize: 12, color: uploadMsg.includes("sucesso") ? "#4ade80" : "#f87171", fontWeight: 500 }}>
+                {uploadMsg}
+              </div>
+            )}
+
+            {/* Submit button */}
+            <button
+              onClick={handleUpload}
+              disabled={!uploadFile || uploading}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "13px 20px",
+                borderRadius: 8,
+                background: uploadFile ? "linear-gradient(135deg, var(--primary-c), #a00000)" : "rgba(255,255,255,.04)",
+                border: "none",
+                color: uploadFile ? "#fff" : "var(--text3)",
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+                cursor: uploadFile ? "pointer" : "not-allowed",
+                opacity: uploading ? 0.6 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{uploading ? "hourglass_top" : "cloud_upload"}</span>
+              {uploading ? "A enviar..." : "Enviar"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

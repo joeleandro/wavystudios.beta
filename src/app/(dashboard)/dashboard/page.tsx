@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { formatDateShort, formatDateParts } from "@/lib/utils/formatDate";
 import { inicioDoMes, fimDoMes } from "@/lib/utils/dates";
+import { DateBadge } from "@/components/ui/DateBadge";
 
 export default function ClienteDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -193,13 +193,7 @@ export default function ClienteDashboard() {
           <div className="db-card-label"><div className="dot" />Próxima</div>
           {proximaSessao ? (
             <>
-              {(() => { const parts = formatDateParts(proximaSessao.data); return (
-                <div>
-                  <div style={{ fontSize: 11, opacity: 0.5, letterSpacing: 2, textTransform: "uppercase" }}>{parts.weekday}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", lineHeight: 1.1 }}>{parts.dayMonth}</div>
-                  <div style={{ fontSize: 12, opacity: 0.4 }}>{parts.year}</div>
-                </div>
-              ); })()}
+              <DateBadge date={proximaSessao.data} />
               <div className="db-stat-desc" style={{ marginTop: 6 }}>{proximaSessao.hora_inicio} – {proximaSessao.hora_fim}</div>
               <span className={`status-pill ${proximaSessao.estado === "confirmada" ? "sp-ok" : "sp-pend"}`} style={{ marginTop: 8 }}>{proximaSessao.estado}</span>
             </>
@@ -292,14 +286,18 @@ export default function ClienteDashboard() {
             <table className="db-table">
               <thead><tr><th>Data</th><th>Hora</th><th>Tipo</th><th>Estado</th></tr></thead>
               <tbody>
-                {sessoes.slice(0, 6).map(s => (
-                  <tr key={s.id}>
-                    <td>{formatDateShort(s.data)}</td>
-                    <td>{s.hora_inicio}</td>
-                    <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
-                    <td><span className={`status-pill ${s.estado === "confirmada" ? "sp-ok" : s.estado === "pendente" ? "sp-pend" : s.estado === "cancelada" || s.estado === "recusada" ? "sp-cancel" : "sp-done"}`}>{s.estado}</span></td>
-                  </tr>
-                ))}
+                {sessoes.slice(0, 6).map(s => {
+                  const d = new Date(s.data + "T12:00:00");
+                  const shortDate = d.toLocaleDateString("pt-PT", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).replace(/^\w/, c => c.toUpperCase()).replace(/\./g, "");
+                  return (
+                    <tr key={s.id}>
+                      <td style={{ fontWeight: 600, color: "var(--text)" }}>{shortDate}</td>
+                      <td>{s.hora_inicio}</td>
+                      <td style={{ textTransform: "capitalize" }}>{s.tipo?.replace("_", "/")}</td>
+                      <td><span className={`status-pill ${s.estado === "confirmada" ? "sp-ok" : s.estado === "pendente" ? "sp-pend" : s.estado === "cancelada" || s.estado === "recusada" ? "sp-cancel" : "sp-done"}`}>{s.estado}</span></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text3)", fontSize: 12 }}>Sem sessões</div>}
