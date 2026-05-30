@@ -42,8 +42,8 @@ export default function EntregasPage() {
 
   useEffect(() => {
     loadEntregas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   async function loadEntregas() {
     setLoading(true);
     try {

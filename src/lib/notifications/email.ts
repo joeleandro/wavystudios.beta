@@ -134,35 +134,38 @@ export async function emailContacto(nome: string, email: string, assunto: string
 
 
 
-export async function emailEntregaCliente(clienteEmail: string, nome: string, ficheiro: string, tipo: string, expiresAt: Date) {
+export async function emailEntregaCliente(
+  clienteEmail: string,
+  clienteNome: string,
+  nomeFile: string,
+  tipo: string,
+  expiresAt: Date
+) {
   const resend = getResend()
   if (!resend) return
 
-  const dataExpStr = expiresAt.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
   const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
 
   try {
     await resend.emails.send({
       from: 'Wavy Studios <onboarding@resend.dev>',
       to: clienteEmail,
-      subject: `O teu ficheiro está pronto — Wavy Studios`,
+      subject: `Entrega pronta: ${nomeFile}`,
       html: `
         <div style="font-family:system-ui;max-width:500px;margin:0 auto;padding:24px;background:#111;color:#e5e2e1;border-radius:12px">
-          <h2 style="color:#ffb4a8;margin-bottom:16px">🎵 Ficheiro pronto!</h2>
-          <p>Olá <strong>${nome}</strong>,</p>
-          <p>O teu <strong>${tipo}</strong> está disponível para download.</p>
-          <p><strong>Ficheiro:</strong> ${ficheiro}</p>
+          <h2 style="color:#ffb4a8;margin-bottom:16px">Entrega disponível 🎵</h2>
+          <p>Olá <strong>${clienteNome}</strong>,</p>
+          <p>O teu <strong>${tipo}</strong> "<em>${nomeFile}</em>" está pronto para download.</p>
+          <p style="color:#aaa">Disponível até: <strong>${expiresAt.toLocaleDateString('pt-PT')}</strong></p>
           <br/>
           <a href="${baseUrl}/dashboard"
              style="background:#8b0000;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
-            Fazer Download
+            Ver no Dashboard
           </a>
-          <br/><br/>
-          <p style="color:#aaa;font-size:13px">⚠️ Este ficheiro estará disponível por 14 dias, até ${dataExpStr}. Após essa data será apagado automaticamente.</p>
         </div>
       `,
     })
-    console.log('[EMAIL] Entrega notification sent to:', clienteEmail)
+    console.log('[EMAIL] Entrega sent to:', clienteEmail)
   } catch (err) {
     console.error('[EMAIL] Entrega error:', err)
   }
