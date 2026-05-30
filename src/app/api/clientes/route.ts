@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer, createSupabaseAdmin } from '@/lib/supabase/server'
+import { emailRenovacaoConfirmada } from '@/lib/email/resend'
 
 export async function GET() {
   const supabase = await createSupabaseServer()
@@ -61,6 +62,20 @@ export async function PATCH(req: NextRequest) {
   if (error) {
     console.error('[CLIENTES PATCH] error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Send renewal email if renovating
+  if (renovar && updateData.data_renovacao) {
+    const adminSupa = await createSupabaseAdmin()
+    const { data: clienteProfile } = await adminSupa.from('profiles').select('nome').eq('id', cliente_id).single()
+    const { data: authUser } = await adminSupa.auth.admin.getUserById(cliente_id)
+    const clienteEmail = authUser?.user?.email
+    if (clienteEmail && clienteProfile) {
+      emailRenovacaoConfirmada({
+        cliente: { nome: clienteProfile.nome, email: clienteEmail },
+        dataRenovacao: updateData.data_renovacao,
+      }).catch(console.error)
+    }
   }
 
   return NextResponse.json({ message: 'Cliente atualizado' })

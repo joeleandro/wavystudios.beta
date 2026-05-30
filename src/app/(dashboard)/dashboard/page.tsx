@@ -3,16 +3,38 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { inicioDoMes, fimDoMes } from "@/lib/utils/dates";
 import { DateBadge } from "@/components/ui/DateBadge";
+
+interface HorasData {
+  // Weekly (within cycle)
+  horasUsadasSemana: number
+  horasRestantesSemana: number
+  horasPlanoDiaSemana: number
+  semanaActual: number
+  totalSemanas: number
+
+  // Cycle (monthly)
+  horasUsadasCiclo: number
+  horasRestantesCiclo: number
+  horasPlanoCiclo: number
+  diasRestantesCiclo: number
+
+  // Mix/Master
+  mmUsados: number
+  mmRestantes: number
+  mmPlano: number
+
+  // Sessions
+  totalSessoesCiclo: number
+}
 
 export default function ClienteDashboard() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [sessoes, setSessoes] = useState<any[]>([]);
-  const [horasInfo, setHorasInfo] = useState<any>(null);
+  const [horas, setHoras] = useState<HorasData | null>(null);
   const [profileMissing, setProfileMissing] = useState(false);
-  const [monthlyInfo, setMonthlyInfo] = useState<any>(null);
+  const [proximaSessao, setProximaSessao] = useState<any>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -30,7 +52,6 @@ export default function ClienteDashboard() {
       .eq("id", user.id)
       .single();
 
-    // FIX: auto-create profile via server API if missing (service role bypasses RLS)
     if (error && error.code === "PGRST116") {
       try {
         const res = await fetch("/api/profile", { method: "POST" });
@@ -42,23 +63,20 @@ export default function ClienteDashboard() {
             .single();
           prof = refetch;
         } else {
-          const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
           setProfileMissing(true);
-          prof = { nome: fallbackName, estado: "pendente" };
+          prof = { nome: user.user_metadata?.nome || user.email?.split("@")[0] || "Artista", estado: "pendente" };
         }
       } catch {
-        const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
         setProfileMissing(true);
-        prof = { nome: fallbackName, estado: "pendente" };
+        prof = { nome: user.user_metadata?.nome || user.email?.split("@")[0] || "Artista", estado: "pendente" };
       }
     } else if (error) {
-      console.warn("[Dashboard] Profile fetch warning:", error);
-      const fallbackName = user.user_metadata?.nome || user.email?.split("@")[0] || "Artista";
       setProfileMissing(true);
-      prof = { nome: fallbackName, estado: "pendente" };
+      prof = { nome: user.user_metadata?.nome || user.email?.split("@")[0] || "Artista", estado: "pendente" };
     }
     setProfile(prof);
 
+    // Recent sessions (for table)
     const { data: sess } = await supabase
       .from("sessoes")
       .select("*")
@@ -67,90 +85,109 @@ export default function ClienteDashboard() {
       .limit(10);
     setSessoes(sess || []);
 
-    // Cycle start = plan renewal date (data_inicio). Used hours only count
-    // sessions on/after this date, so "Renovar" resets all counters.
-    const cicloInicio: string | null = prof?.data_inicio || null;
-    const cicloFim: string | null = prof?.data_renovacao || null;
+    // ─── Dynamic hours calculation (mirrors calcularHorasCliente) ───
+    const plano = prof?.planos;
+    const dataInicio = prof?.data_inicio;
+    const dataRenovacao = prof?.data_renovacao;
 
-    // Calculate weekly hours (UTC-safe)
-    const now = new Date();
-    const utcDay = now.getUTCDay(); // 0=Sun, 1=Mon ...
-    const mondayOffset = utcDay === 0 ? -6 : 1 - utcDay;
-    const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + mondayOffset));
-    const mondayStr = monday.toISOString().split("T")[0];
-    const sunday = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 6));
-    const sundayStr = sunday.toISOString().split("T")[0];
+    if (!plano || !dataInicio || !dataRenovacao) {
+      // No cycle configured — show zeros
+      setHoras(null);
+      return;
+    }
 
-    // Weekly lower bound respects the renewal date (don't count sessions before renewal)
-    const weekInicio = cicloInicio && cicloInicio > mondayStr ? cicloInicio : mondayStr;
-
-    const { data: weekSess } = await supabase
+    // Fetch all confirmed/concluded sessions within cycle
+    const { data: cicloSessoes } = await supabase
       .from("sessoes")
-      .select("duracao_minutos")
+      .select("data, duracao_minutos, tipo, estado")
       .eq("cliente_id", user.id)
-      .gte("data", weekInicio)
-      .lte("data", sundayStr)
-      .in("estado", ["pendente", "confirmada", "concluida"]);
+      .in("estado", ["confirmada", "concluida"])
+      .gte("data", dataInicio)
+      .lt("data", dataRenovacao)
+      .order("data", { ascending: true });
 
-    const usadasMin = (weekSess || []).reduce((s: number, x: any) => s + x.duracao_minutos, 0);
-    const planoMin = (prof?.planos?.horas_semanais || 0) * 60;
+    const sessoesValidas = cicloSessoes || [];
 
-    setHorasInfo({ usadas: usadasMin, plano: planoMin, restantes: Math.max(0, planoMin - usadasMin) });
+    // Calculate which week of the cycle we're in
+    const hoje = new Date();
+    const inicioDate = new Date(dataInicio + "T00:00:00Z");
+    const diasDecorridos = Math.max(0, Math.floor(
+      (hoje.getTime() - inicioDate.getTime()) / (1000 * 60 * 60 * 24)
+    ));
+    const semanaIdx = Math.min(Math.floor(diasDecorridos / 7), 3); // 0-3
 
-    // ─── Monthly / cycle data ───
-    // Use the renewal cycle (data_inicio → data_renovacao) when available;
-    // fall back to the calendar month otherwise.
-    const mesInicio = cicloInicio || inicioDoMes(now);
-    const mesFim = cicloFim || fimDoMes(now);
+    const inicioSemana = new Date(inicioDate);
+    inicioSemana.setUTCDate(inicioDate.getUTCDate() + semanaIdx * 7);
+    const fimSemana = new Date(inicioSemana);
+    fimSemana.setUTCDate(inicioSemana.getUTCDate() + 7);
 
-    // Monthly hours used (sum duracao_minutos of all sessions in the cycle)
-    const { data: monthSess } = await supabase
-      .from("sessoes")
-      .select("duracao_minutos")
-      .eq("cliente_id", user.id)
-      .gte("data", mesInicio)
-      .lte("data", mesFim)
-      .in("estado", ["pendente", "confirmada", "concluida"]);
+    const inicioSemanaStr = inicioSemana.toISOString().split("T")[0];
+    const fimSemanaStr = fimSemana.toISOString().split("T")[0];
 
-    const horasMensaisUsadasMin = (monthSess || []).reduce((s: number, x: any) => s + x.duracao_minutos, 0);
-    const horasMensaisPlanoMin = (prof?.planos?.horas_semanais || 0) * 4 * 60; // horas_semanais * 4 weeks
-    const horasMensaisRestantesMin = Math.max(0, horasMensaisPlanoMin - horasMensaisUsadasMin);
+    // Sessions this week
+    const sessoesSemana = sessoesValidas.filter(
+      (s: any) => s.data >= inicioSemanaStr && s.data < fimSemanaStr
+    );
+    const minutosUsadosSemana = sessoesSemana.reduce((acc: number, s: any) => acc + s.duracao_minutos, 0);
+    const horasUsadasSemana = minutosUsadosSemana / 60;
+    const horasPlanoDiaSemana = plano.horas_semanais || 0;
+    const horasRestantesSemana = Math.max(0, horasPlanoDiaSemana - horasUsadasSemana);
 
-    // Mix/Master used this cycle
-    const { count: mmUsados } = await supabase
-      .from("sessoes")
-      .select("id", { count: "exact", head: true })
-      .eq("cliente_id", user.id)
-      .eq("tipo", "mix_master")
-      .gte("data", mesInicio)
-      .lte("data", mesFim)
-      .in("estado", ["confirmada", "concluida"]);
+    // Full cycle hours
+    const minutosTotaisCiclo = sessoesValidas.reduce((acc: number, s: any) => acc + s.duracao_minutos, 0);
+    const horasUsadasCiclo = minutosTotaisCiclo / 60;
+    const horasPlanoCiclo = (plano.horas_semanais || 0) * 4;
+    const horasRestantesCiclo = Math.max(0, horasPlanoCiclo - horasUsadasCiclo);
 
-    const mmTotal = prof?.planos?.mix_master_mes || 0;
-    const mmRestantes = Math.max(0, mmTotal - (mmUsados ?? 0));
+    // Mix/Master
+    const mmUsados = sessoesValidas.filter((s: any) => s.tipo === "mix_master").length;
+    const mmPlano = plano.mix_master_mes || 0;
+    const mmRestantes = Math.max(0, mmPlano - mmUsados);
 
-    setMonthlyInfo({
-      horasUsadasMin: horasMensaisUsadasMin,
-      horasPlanoMin: horasMensaisPlanoMin,
-      horasRestantesMin: horasMensaisRestantesMin,
-      mmUsados: mmUsados ?? 0,
-      mmTotal,
+    // Days remaining
+    const renovacaoDate = new Date(dataRenovacao + "T00:00:00Z");
+    const diasRestantesCiclo = Math.max(0, Math.ceil(
+      (renovacaoDate.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
+    ));
+
+    setHoras({
+      horasUsadasSemana,
+      horasRestantesSemana,
+      horasPlanoDiaSemana,
+      semanaActual: semanaIdx + 1,
+      totalSemanas: 4,
+      horasUsadasCiclo,
+      horasRestantesCiclo,
+      horasPlanoCiclo,
+      diasRestantesCiclo,
+      mmUsados,
       mmRestantes,
+      mmPlano,
+      totalSessoesCiclo: sessoesValidas.length,
     });
+
+    // Next session
+    const hojeStr = hoje.toISOString().split("T")[0];
+    const { data: proxima } = await supabase
+      .from("sessoes")
+      .select("*")
+      .eq("cliente_id", user.id)
+      .in("estado", ["confirmada", "pendente"])
+      .gte("data", hojeStr)
+      .order("data", { ascending: true })
+      .order("hora_inicio", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    setProximaSessao(proxima);
   }
 
-  const pct = horasInfo ? Math.round((horasInfo.usadas / Math.max(1, horasInfo.plano)) * 100) : 0;
-  const pctMensal = monthlyInfo ? Math.round((monthlyInfo.horasUsadasMin / Math.max(1, monthlyInfo.horasPlanoMin)) * 100) : 0;
-  const proximaSessao = sessoes.find(s => s.estado === "confirmada" || s.estado === "pendente");
-
-  // Personalized greeting using first name
-  const primeiroNome =
-    profile?.nome?.split(" ")[0] ||
-    user?.email?.split("@")[0] ||
-    "artista";
-
+  const primeiroNome = profile?.nome?.split(" ")[0] || user?.email?.split("@")[0] || "artista";
   const plano = profile?.planos;
   const planoId = plano?.id;
+
+  // Progress percentages
+  const pctSemana = horas ? Math.round((horas.horasUsadasSemana / Math.max(0.01, horas.horasPlanoDiaSemana)) * 100) : 0;
+  const pctCiclo = horas ? Math.round((horas.horasUsadasCiclo / Math.max(0.01, horas.horasPlanoCiclo)) * 100) : 0;
 
   return (
     <div style={{ maxWidth: "100%" }}>
@@ -161,12 +198,12 @@ export default function ClienteDashboard() {
           {profile?.data_renovacao && (
             <span style={{ marginLeft: 8 }}>
               • Renova: <strong style={{ color: "var(--text)" }}>{new Date(profile.data_renovacao + "T12:00:00").toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" })}</strong>
+              {horas && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--text3)" }}>({horas.diasRestantesCiclo} dias)</span>}
             </span>
           )}
         </div>
       </div>
 
-      {/* Friendly empty state instead of error */}
       {profileMissing && (
         <div className="db-card" style={{ background: "rgba(234,179,8,.06)", borderColor: "rgba(234,179,8,.2)", marginBottom: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -194,23 +231,24 @@ export default function ClienteDashboard() {
       {/* ─── ROW 1: Weekly stats ─── */}
       <div className="db-grid-4">
         <div className="db-card red-glow">
-          <div className="db-card-label"><div className="dot" />Horas restantes</div>
-          <div className="db-stat-val">{horasInfo ? (horasInfo.restantes / 60).toFixed(1) : 0}<span className="u">h</span></div>
-          <div className="db-stat-desc">de {plano?.horas_semanais || 0}h semanais</div>
-          <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pct}%` }} /></div>
+          <div className="db-card-label"><div className="dot" />Horas semana</div>
+          <div className="db-stat-val">{horas ? horas.horasRestantesSemana.toFixed(1) : 0}<span className="u">h</span></div>
+          <div className="db-stat-desc">de {horas?.horasPlanoDiaSemana || plano?.horas_semanais || 0}h semanais</div>
+          <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pctSemana}%` }} /></div>
+          {horas && <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>Semana {horas.semanaActual} de {horas.totalSemanas}</div>}
         </div>
 
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Sessões</div>
-          <div className="db-stat-val">{sessoes.length}</div>
-          <div className="db-stat-desc">total marcadas</div>
+          <div className="db-stat-val">{horas?.totalSessoesCiclo ?? sessoes.length}</div>
+          <div className="db-stat-desc">no ciclo actual</div>
         </div>
 
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Próxima</div>
           {proximaSessao ? (
             <>
-              <DateBadge date={proximaSessao.data} />
+              <DateBadge date={proximaSessao.data} size="sm" />
               <div className="db-stat-desc" style={{ marginTop: 6 }}>{proximaSessao.hora_inicio} – {proximaSessao.hora_fim}</div>
               <span className={`status-pill ${proximaSessao.estado === "confirmada" ? "sp-ok" : "sp-pend"}`} style={{ marginTop: 8 }}>{proximaSessao.estado}</span>
             </>
@@ -224,26 +262,24 @@ export default function ClienteDashboard() {
         </div>
       </div>
 
-      {/* ─── ROW 2: Monthly plan details ─── */}
+      {/* ─── ROW 2: Cycle / monthly stats ─── */}
       <div className="db-grid-4" style={{ marginTop: 12 }}>
-        {/* Monthly hours */}
         <div className="db-card red-glow">
-          <div className="db-card-label"><div className="dot" />Hrs mensais</div>
-          <div className="db-stat-val">{monthlyInfo ? (monthlyInfo.horasRestantesMin / 60).toFixed(1) : 0}<span className="u">h</span></div>
-          <div className="db-stat-desc">de {(plano?.horas_semanais || 0) * 4}h mês</div>
-          <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pctMensal}%` }} /></div>
+          <div className="db-card-label"><div className="dot" />Hrs ciclo</div>
+          <div className="db-stat-val">{horas ? horas.horasRestantesCiclo.toFixed(1) : 0}<span className="u">h</span></div>
+          <div className="db-stat-desc">de {horas?.horasPlanoCiclo || (plano?.horas_semanais || 0) * 4}h mensais</div>
+          <div className="db-bar"><div className="db-bar-fill" style={{ width: `${pctCiclo}%` }} /></div>
+          {horas && <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>Renova em {horas.diasRestantesCiclo} dias</div>}
         </div>
 
-        {/* Mix/Master */}
         <div className="db-card red-glow">
           <div className="db-card-label"><div className="dot" />Mix/Master</div>
-          <div className="db-stat-val" style={{ color: monthlyInfo?.mmRestantes === 0 ? "#f87171" : undefined }}>
-            {monthlyInfo?.mmRestantes ?? 0}
+          <div className="db-stat-val" style={{ color: horas?.mmRestantes === 0 ? "#f87171" : undefined }}>
+            {horas?.mmRestantes ?? 0}
           </div>
-          <div className="db-stat-desc">restantes ({monthlyInfo?.mmUsados ?? 0}/{monthlyInfo?.mmTotal ?? 0} usados)</div>
+          <div className="db-stat-desc">restantes ({horas?.mmUsados ?? 0} de {horas?.mmPlano ?? 0} usados)</div>
         </div>
 
-        {/* Sessão Foto — conditional */}
         {plano?.sessao_foto ? (
           <div className="db-card red-glow">
             <div className="db-card-label"><div className="dot" />Sessão foto</div>
@@ -255,15 +291,13 @@ export default function ClienteDashboard() {
             <div className="db-card" style={{ background: "rgba(255,255,255,.015)", opacity: 0.6, cursor: "pointer" }}>
               <div className="db-card-label"><div className="dot" />Sessão foto</div>
               <div className="db-stat-val" style={{ fontSize: 18, display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>
-                UPGRADE
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>UPGRADE
               </div>
               <div className="db-stat-desc">Plano Avançado</div>
             </div>
           </Link>
         )}
 
-        {/* Instrumental — conditional */}
         {plano?.instrumental ? (
           <div className="db-card red-glow">
             <div className="db-card-label"><div className="dot" />Instrumental</div>
@@ -275,8 +309,7 @@ export default function ClienteDashboard() {
             <div className="db-card" style={{ background: "rgba(255,255,255,.015)", opacity: 0.6, cursor: "pointer" }}>
               <div className="db-card-label"><div className="dot" />Instrumental</div>
               <div className="db-stat-val" style={{ fontSize: 18, display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>
-                UPGRADE
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>lock</span>UPGRADE
               </div>
               <div className="db-stat-desc">Plano Avançado</div>
             </div>
@@ -284,7 +317,6 @@ export default function ClienteDashboard() {
         )}
       </div>
 
-      {/* Dir. Criativa — only show if plan has it */}
       {plano?.direcao_criativa && (
         <div className="db-grid-4" style={{ marginTop: 12 }}>
           <div className="db-card red-glow">

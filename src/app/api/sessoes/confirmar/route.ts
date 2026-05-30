@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/server'
 import { emailSessaoConfirmada, emailSessaoRecusada } from '@/lib/email/resend'
-import { incrementarHorasUsadas } from '@/lib/validations/horas'
 
 // Confirm/refuse session via email link (uses sessao_id directly)
 export async function GET(req: NextRequest) {
@@ -29,11 +28,6 @@ export async function GET(req: NextRequest) {
 
   // Update session
   await supabase.from('sessoes').update({ estado: novoEstado, atualizado_em: new Date().toISOString() }).eq('id', sessaoId)
-
-  // Increment weekly hours when confirmed
-  if (novoEstado === 'confirmada') {
-    await incrementarHorasUsadas(supabase, sessao.cliente_id, sessao.data, sessao.duracao_minutos)
-  }
 
   // Notify client via dashboard
   await supabase.from('notificacoes').insert({

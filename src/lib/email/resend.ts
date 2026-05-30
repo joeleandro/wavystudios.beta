@@ -288,3 +288,54 @@ export async function emailContacto(nome: string, email: string, assunto: string
     return { success: false }
   }
 }
+
+
+
+// ─────────────────────────────────────
+// 6. RENOVAÇÃO CONFIRMADA → EMAIL PARA CLIENTE
+// ─────────────────────────────────────
+export async function emailRenovacaoConfirmada({
+  cliente,
+  dataRenovacao,
+}: {
+  cliente: { nome: string; email: string }
+  dataRenovacao: string
+}) {
+  if (!process.env.RESEND_API_KEY) return
+
+  const primeiroNome = cliente.nome.split(' ')[0]
+  const dataFormatada = new Date(dataRenovacao + 'T12:00:00').toLocaleDateString('pt-PT', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  try {
+    await getResend()!.emails.send({
+      from: FROM,
+      to: cliente.email,
+      subject: '✅ Subscrição renovada — Wavy Studios',
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0d0d0d;color:#fff;border-radius:12px;overflow:hidden">
+          <div style="background:#8B0000;padding:32px;text-align:center">
+            <h1 style="margin:0;font-size:24px;letter-spacing:4px">WAVY STUDIOS</h1>
+          </div>
+          <div style="padding:32px">
+            <h2 style="margin:0 0 8px">Olá, ${primeiroNome} 👋</h2>
+            <p style="color:rgba(255,255,255,0.6);margin:0 0 32px">A tua subscrição foi renovada com sucesso.</p>
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:24px">
+              <p style="margin:0 0 8px;font-size:13px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px">Próxima renovação</p>
+              <p style="margin:0;font-size:22px;font-weight:700;color:#ff6b6b">${dataFormatada}</p>
+            </div>
+            <p style="margin-top:24px;color:rgba(255,255,255,0.6)">As tuas horas foram resetadas. Podes marcar as tuas sessões no dashboard.</p>
+            <a href="${BASE_URL}/dashboard" style="display:inline-block;margin-top:24px;background:#8B0000;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;letter-spacing:1px">Ir para o Dashboard</a>
+          </div>
+          <div style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:rgba(255,255,255,0.3)">Wavy Studios · wavystudiosinfo@gmail.com</div>
+        </div>
+      `,
+    })
+    console.log('[EMAIL] Renovação → cliente:', cliente.email)
+  } catch (err) {
+    console.error('[EMAIL] Renovation error:', err)
+  }
+}
