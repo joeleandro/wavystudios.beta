@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer, createSupabaseAdmin } from '@/lib/supabase/server'
 import { emailEntregaFicheiro } from '@/lib/email/resend'
 
+// Allow large file uploads (Next.js defaults to 4MB)
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 const BUCKET = 'wavy-entregas'
 const EXPIRY_DAYS = 14
 const MAX_SIZE = 500 * 1024 * 1024 // 500MB
@@ -35,9 +39,11 @@ export async function GET() {
 
 // POST /api/entregas — Admin uploads a file for a client
 export async function POST(req: NextRequest) {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  try {
+    console.log('[ENTREGAS] 1. Recebendo request...')
+    const supabase = await createSupabaseServer()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   // Check admin role
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
@@ -58,6 +64,9 @@ export async function POST(req: NextRequest) {
   if (!sessaoId || !clienteId) {
     return NextResponse.json({ error: 'sessao_id e cliente_id são obrigatórios' }, { status: 400 })
   }
+
+  console.log('[ENTREGAS] 2. File:', file.name, 'Size:', file.size, 'Type:', file.type)
+  console.log('[ENTREGAS] 3. sessaoId:', sessaoId, 'clienteId:', clienteId, 'tipo:', tipo)
 
   // Validate file extension
   const ext = '.' + file.name.split('.').pop()?.toLowerCase()
@@ -150,6 +159,10 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ entrega, message: 'Ficheiro enviado com sucesso!' })
+  } catch (err) {
+    console.error('[ENTREGAS] CATCH error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
 }
 
 // ─── WhatsApp helper ───

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { verificarConflito, calcularHoraFim, obterSlotsDisponiveis } from '@/lib/validations/sessoes'
-import { verificarHorasSemana } from '@/lib/validations/horas'
+import { verificarHorasSemana, incrementarHorasUsadas } from '@/lib/validations/horas'
 import { emailNovaSessionAdmin } from '@/lib/email/resend'
 
 export async function GET(req: NextRequest) {
@@ -161,6 +161,11 @@ export async function PATCH(req: NextRequest) {
   }
 
   await supabase.from('sessoes').update({ estado, atualizado_em: new Date().toISOString() }).eq('id', sessao_id)
+
+  // Increment weekly hours when confirmed
+  if (estado === 'confirmada' && sessao.estado === 'pendente') {
+    await incrementarHorasUsadas(supabase, sessao.cliente_id, sessao.data, sessao.duracao_minutos)
+  }
 
   // Notify client
   if (profile?.role === 'admin' && (estado === 'confirmada' || estado === 'recusada')) {
