@@ -88,6 +88,7 @@ export async function GET() {
       role: 'cliente',
       estado: 'ativo',
       data_inicio: new Date().toISOString().split('T')[0],
+      data_renovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     }, { onConflict: 'id' })
 
     if (profErr) {
@@ -99,6 +100,7 @@ export async function GET() {
         role: 'cliente',
         estado: 'ativo',
         data_inicio: new Date().toISOString().split('T')[0],
+        data_renovacao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       }, { onConflict: 'id' })
       if (profErr2) results.push({ cliente_profile: 'error', message: profErr2.message })
       else results.push({ cliente_profile: 'ok_no_plan', hint: 'Sem plano atribuído — atribui um plano no admin.' })

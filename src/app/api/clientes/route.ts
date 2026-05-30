@@ -35,6 +35,14 @@ export async function PATCH(req: NextRequest) {
   if (data_inicio) updateData.data_inicio = data_inicio
   if (estado === 'ativo' && !data_inicio) updateData.data_inicio = new Date().toISOString().split('T')[0]
 
+  // Auto-set data_renovacao = data_inicio + 30 days when activating
+  if (estado === 'ativo') {
+    const inicio = updateData.data_inicio || data_inicio || new Date().toISOString().split('T')[0]
+    const renovacao = new Date(inicio + 'T12:00:00')
+    renovacao.setDate(renovacao.getDate() + 30)
+    updateData.data_renovacao = renovacao.toISOString().split('T')[0]
+  }
+
   await supabase.from('profiles').update(updateData).eq('id', cliente_id)
 
   return NextResponse.json({ message: 'Cliente atualizado' })

@@ -146,7 +146,14 @@ export default function ClienteDashboard() {
     <div style={{ maxWidth: "100%" }}>
       <div style={{ marginBottom: 26 }}>
         <div className="db-page-title bebas">Olá, {primeiroNome} 👋</div>
-        <div className="db-page-sub">PLANO {plano?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}</div>
+        <div className="db-page-sub">
+          PLANO {plano?.nome?.toUpperCase() || "—"} • {profile?.estado?.toUpperCase() || "PENDENTE"}
+          {profile?.data_renovacao && (
+            <span style={{ marginLeft: 8 }}>
+              • Renova: <strong style={{ color: "var(--text)" }}>{new Date(profile.data_renovacao + "T12:00:00").toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" })}</strong>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Friendly empty state instead of error */}
